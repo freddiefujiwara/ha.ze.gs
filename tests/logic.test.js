@@ -96,6 +96,11 @@ describe("payload parsing", () => {
     expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humidity: "50" });
   });
 
+  it("returns null for non-array payloads", () => {
+    const payload = "a&&a({\"Datetime\":\"now\"});";
+    expect(parseLatestPayload(payload)).toBeNull();
+  });
+
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);"),

@@ -1,3 +1,4 @@
+const API_BASE_URL = "http://a.ze.gs";
 const VOICE_HOSTS = {
   speak: "192.168.1.22",
   speakTatami: "192.168.1.236",
@@ -21,13 +22,13 @@ const buildStatusUrl = (params = {}) => {
   return url.toString();
 };
 
-export const apiUrl = (args) => `http://a.ze.gs/${args.join("/")}`;
+export const apiUrl = (args) => `${API_BASE_URL}/${args.join("/")}`;
 
 export const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
   return {
-    speak: `http://a.ze.gs/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
-    speakTatami: `http://a.ze.gs/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
+    speak: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
+    speakTatami: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
   };
 };
 
@@ -75,7 +76,7 @@ export const parseYouTubeId = (youtubeUrl) => {
 
 export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
-  return { videoId, url: `http://a.ze.gs/youtube-play/-h/${host}/-v/40/-i/${videoId}` };
+  return { videoId, url: `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}` };
 };
 
 export const buildGptUrl = (host, prompt) => {
@@ -85,7 +86,8 @@ export const buildGptUrl = (host, prompt) => {
 
 export const parseLatestPayload = (payload) => {
   const cleaned = payload.replace(/^a&&a\(/, "").replace(/\);$/, "");
-  return JSON.parse(cleaned).pop();
+  const parsed = JSON.parse(cleaned);
+  return Array.isArray(parsed) ? parsed.pop() : null;
 };
 
 export const fetchLatestStatus = async (fetcher) => {
@@ -104,11 +106,7 @@ export const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
   const requiredElements = getRequiredElements(doc, requiredIds);
 
-  const statusCells = {
-    Datetime: doc.getElementById("Datetime"),
-    Temperature: doc.getElementById("Temperature"),
-    Humidity: doc.getElementById("Humidity"),
-  };
+  const statusCells = getRequiredElements(doc, ["Datetime", "Temperature", "Humidity"]);
 
   if (Object.values(requiredElements).some((element) => !element)) {
     return null;
@@ -143,7 +141,7 @@ export const initApp = (doc, fetcher = fetch) => {
   };
 
   const fetchLatest = async () => {
-    if (!statusCells.Datetime || !statusCells.Temperature || !statusCells.Humidity) {
+    if (Object.values(statusCells).some((element) => !element)) {
       return null;
     }
     const latest = await fetchLatestStatus(fetcher);
