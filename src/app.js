@@ -1,28 +1,23 @@
 import { apiUrl, initApp } from "./logic.js";
 
-export const start = (doc = document, fetcher = fetch) => {
-  const instance = initApp(doc, fetcher);
-  if (!instance) {
-    return null;
-  }
-
-  const { setAlarm, youtubePlay, gpt, fetchLatest, elements } = instance;
-
-  const bindLinkClicks = (selector, handler) => {
-    doc.querySelectorAll(selector).forEach((link) => {
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        handler(link);
-      });
+export const bindLinkClicks = (doc, selector, handler) => {
+  doc.querySelectorAll(selector).forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      handler(link);
     });
-  };
+  });
+};
+
+export const wireEvents = (doc, fetcher, instance) => {
+  const { setAlarm, youtubePlay, gpt, elements } = instance;
 
   elements.setButton.addEventListener("click", (event) => {
     event.preventDefault();
     setAlarm();
   });
 
-  bindLinkClicks("a[data-api], a[data-fetch]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
@@ -32,14 +27,14 @@ export const start = (doc = document, fetcher = fetch) => {
     }
   });
 
-  bindLinkClicks("a[data-youtube-host]", (link) => {
+  bindLinkClicks(doc, "a[data-youtube-host]", (link) => {
     const host = link.dataset.youtubeHost;
     if (host) {
       youtubePlay(host);
     }
   });
 
-  bindLinkClicks("a[data-gpt-host]", (link) => {
+  bindLinkClicks(doc, "a[data-gpt-host]", (link) => {
     const host = link.dataset.gptHost;
     if (host) {
       gpt(host);
@@ -54,7 +49,17 @@ export const start = (doc = document, fetcher = fetch) => {
       }
     });
   });
+};
 
+export const start = (doc = document, fetcher = fetch) => {
+  const instance = initApp(doc, fetcher);
+  if (!instance) {
+    return null;
+  }
+
+  const { fetchLatest } = instance;
+
+  wireEvents(doc, fetcher, instance);
   fetchLatest();
 
   return instance;

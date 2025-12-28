@@ -11,6 +11,16 @@ const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com"
 
 const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
+const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
+
+const buildStatusUrl = (params = {}) => {
+  const url = new URL(STATUS_SCRIPT_URL);
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+  return url.toString();
+};
+
 export const apiUrl = (args) => `http://a.ze.gs/${args.join("/")}`;
 
 export const buildVoiceUrls = (voiceText) => {
@@ -38,27 +48,29 @@ export const parseYouTubeId = (youtubeUrl) => {
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.hostname === "youtu.be") {
-      const id = parsed.pathname.split("/")[1];
-      return id || "";
+      return parsed.pathname.split("/")[1] || "";
     }
 
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
       return "";
     }
 
-    if (parsed.pathname === "/watch") {
-      return parsed.searchParams.get("v") || "";
-    }
+    const handlers = [
+      {
+        match: () => parsed.pathname === "/watch",
+        getId: () => parsed.searchParams.get("v") || "",
+      },
+      {
+        match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
+        getId: () => parsed.pathname.split("/")[2] || "",
+      },
+    ];
 
-    if (parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/")) {
-      const id = parsed.pathname.split("/")[2];
-      return id || "";
-    }
+    const handler = handlers.find(({ match }) => match());
+    return handler ? handler.getId() : "";
   } catch (error) {
     return "";
   }
-
-  return "";
 };
 
 export const buildYouTubePlayUrl = (host, youtubeUrl) => {
@@ -77,9 +89,7 @@ export const parseLatestPayload = (payload) => {
 };
 
 export const fetchLatestStatus = async (fetcher) => {
-  const response = await fetcher(
-    `${STATUS_SCRIPT_URL}?callback=a`,
-  );
+  const response = await fetcher(buildStatusUrl({ callback: "a" }));
   const payload = await response.text();
   return parseLatestPayload(payload);
 };
@@ -92,7 +102,7 @@ export const updateStatusCells = (latest, elements) => {
 
 export const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-  const requiredElements = Object.fromEntries(requiredIds.map((id) => [id, doc.getElementById(id)]));
+  const requiredElements = getRequiredElements(doc, requiredIds);
 
   const statusCells = {
     Datetime: doc.getElementById("Datetime"),
