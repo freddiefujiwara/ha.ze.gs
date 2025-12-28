@@ -3,15 +3,17 @@ export const apiUrl = (args) => `http://a.ze.gs/${args.join("/")}`;
 export const buildVoiceUrls = (voiceText) => {
   const sanitized = encodeURIComponent(voiceText.replace(/[\s\n\r]/g, ""));
   return {
-    speak: `javascript:fetch(decodeURIComponent('http%3A%2F%2Fa.ze.gs%2Fgoogle-home-speaker-wrapper%2F-h%2F192.168.1.22%2F-v%2F60%2F-s%2F${sanitized}'));`,
-    speakTatami: `javascript:fetch(decodeURIComponent('http%3A%2F%2Fa.ze.gs%2Fgoogle-home-speaker-wrapper%2F-h%2F192.168.1.236%2F-v%2F60%2F-s%2F${sanitized}'));`,
+    speak: `http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.22/-v/60/-s/${sanitized}`,
+    speakTatami: `http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.236/-v/60/-s/${sanitized}`,
   };
 };
 
 export const updateVoiceLinks = (voiceText, elements) => {
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
-  elements.speak.setAttribute("href", speak);
-  elements.speakTatami.setAttribute("href", speakTatami);
+  elements.speak.dataset.url = speak;
+  elements.speakTatami.dataset.url = speakTatami;
+  elements.speak.setAttribute("href", "#");
+  elements.speakTatami.setAttribute("href", "#");
 };
 
 export const buildAlarmUrl = (hour, minute, text) => {
