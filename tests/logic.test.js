@@ -65,9 +65,14 @@ describe("utility builders", () => {
 
   it("parses youtube id by url form", () => {
     expect(parseYouTubeId("https://youtu.be/abc123")).toBe("abc123");
+    expect(parseYouTubeId("https://youtu.be/")).toBe("");
     expect(parseYouTubeId("https://www.youtube.com/watch?v=xyz987")).toBe("xyz987");
+    expect(parseYouTubeId("https://www.youtube.com/watch")).toBe("");
     expect(parseYouTubeId("https://music.youtube.com/watch?v=qwe456&feature=share")).toBe("qwe456");
     expect(parseYouTubeId("https://www.youtube.com/live/liveid?feature=share")).toBe("liveid");
+    expect(parseYouTubeId("https://www.youtube.com/live/")).toBe("");
+    expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBe("");
+    expect(parseYouTubeId("https://example.com/watch?v=abc")).toBe("");
     expect(parseYouTubeId("invalid")).toBe("");
   });
 
@@ -199,8 +204,53 @@ describe("app bootstrap", () => {
     document.getElementById("prompt").value = "hi";
     document.querySelector("a[data-gpt-host]").dispatchEvent(new Event("click"));
 
+    document.getElementById("speak").dataset.url = "http://example.com/speak";
+    document.getElementById("speak").dispatchEvent(new Event("click"));
+
+    document.getElementById("speak_tatami").dataset.url = "http://example.com/tatami";
+    document.getElementById("speak_tatami").dispatchEvent(new Event("click"));
+
     expect(instance).not.toBeNull();
     expect(fetcher).toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
+  it("handles api/fetch links and window api helper", async () => {
+    vi.resetModules();
+    const document = window.document;
+    document.body.innerHTML = `
+      <textarea id="voicetext"></textarea>
+      <a id="speak" href="#">Nest Wifi</a>
+      <a id="speak_tatami" href="#">Tatami</a>
+      <select id="hour"><option value="08" selected>08</option></select>
+      <select id="min"><option value="15" selected>15</option></select>
+      <textarea id="alarmtext"></textarea>
+      <a id="set" href="#">Set</a>
+      <textarea id="youtube_url"></textarea>
+      <textarea id="prompt"></textarea>
+      <div id="Datetime"></div>
+      <div id="Temperature"></div>
+      <div id="Humidity"></div>
+      <a href="#" data-api='["hue","lights","off"]'>API</a>
+      <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
+      <a href="#" data-youtube-host="">NoHost</a>
+    `;
+
+    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);") });
+
+    vi.stubGlobal("fetch", fetcher);
+    await import("../src/app.js");
+
+    document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
+
+    window.api(["hue", "lights", "on"]);
+
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
 
     vi.unstubAllGlobals();
   });
