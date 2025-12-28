@@ -141,19 +141,3 @@ export const initApp = (doc, fetcher = fetch) => {
     },
   };
 };
-
-export const _sleep = (sec, cb) => {
-  let id = 0;
-  const wait = () => {
-    if (sec-- <= 0 && typeof cb === "function") {
-      cb();
-      return;
-    }
-    if (id > 0) {
-      clearTimeout(id);
-    }
-    id = setTimeout(wait, 1000);
-  };
-  id = setTimeout(wait, 0);
-  return () => clearTimeout(id);
-};

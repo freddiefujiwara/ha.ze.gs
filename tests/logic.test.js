@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  _sleep,
   apiUrl,
   buildAlarmUrl,
   buildGptUrl,
@@ -179,19 +178,6 @@ describe("app wiring", () => {
     expect(initApp(document, fetcher)).toBeNull();
   });
 });
-
-describe("sleep helper", () => {
-  it("waits and runs callback", () => {
-    vi.useFakeTimers();
-    const cb = vi.fn();
-    const cancel = _sleep(1, cb);
-    vi.advanceTimersByTime(1000);
-    expect(cb).toHaveBeenCalledOnce();
-    cancel();
-    vi.useRealTimers();
-  });
-});
-
 
 describe("app bootstrap", () => {
   it("wires anchors and buttons in start", async () => {
