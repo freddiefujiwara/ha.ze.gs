@@ -350,6 +350,16 @@ const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com"
 
 const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
+const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
+
+const buildStatusUrl = (params = {}) => {
+  const url = new URL(STATUS_SCRIPT_URL);
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+  return url.toString();
+};
+
 const apiUrl = (args) => `http://a.ze.gs/${args.join("/")}`;
 
 const buildVoiceUrls = (voiceText) => {
@@ -377,27 +387,29 @@ const parseYouTubeId = (youtubeUrl) => {
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.hostname === "youtu.be") {
-      const id = parsed.pathname.split("/")[1];
-      return id || "";
+      return parsed.pathname.split("/")[1] || "";
     }
 
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
       return "";
     }
 
-    if (parsed.pathname === "/watch") {
-      return parsed.searchParams.get("v") || "";
-    }
+    const handlers = [
+      {
+        match: () => parsed.pathname === "/watch",
+        getId: () => parsed.searchParams.get("v") || "",
+      },
+      {
+        match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
+        getId: () => parsed.pathname.split("/")[2] || "",
+      },
+    ];
 
-    if (parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/")) {
-      const id = parsed.pathname.split("/")[2];
-      return id || "";
-    }
+    const handler = handlers.find(({ match }) => match());
+    return handler ? handler.getId() : "";
   } catch (error) {
     return "";
   }
-
-  return "";
 };
 
 const buildYouTubePlayUrl = (host, youtubeUrl) => {
@@ -416,9 +428,7 @@ const parseLatestPayload = (payload) => {
 };
 
 const fetchLatestStatus = async (fetcher) => {
-  const response = await fetcher(
-    `${STATUS_SCRIPT_URL}?callback=a`,
-  );
+  const response = await fetcher(buildStatusUrl({ callback: "a" }));
   const payload = await response.text();
   return parseLatestPayload(payload);
 };
@@ -431,7 +441,7 @@ const updateStatusCells = (latest, elements) => {
 
 const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-  const requiredElements = Object.fromEntries(requiredIds.map((id) => [id, doc.getElementById(id)]));
+  const requiredElements = getRequiredElements(doc, requiredIds);
 
   const statusCells = {
     Datetime: doc.getElementById("Datetime"),
@@ -500,29 +510,24 @@ const initApp = (doc, fetcher = fetch) => {
   };
 };
 
-const start = (doc = document, fetcher = fetch) => {
-  const instance = initApp(doc, fetcher);
-  if (!instance) {
-    return null;
-  }
-
-  const { setAlarm, youtubePlay, gpt, fetchLatest, elements } = instance;
-
-  const bindLinkClicks = (selector, handler) => {
-    doc.querySelectorAll(selector).forEach((link) => {
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        handler(link);
-      });
+const bindLinkClicks = (doc, selector, handler) => {
+  doc.querySelectorAll(selector).forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      handler(link);
     });
-  };
+  });
+};
+
+const wireEvents = (doc, fetcher, instance) => {
+  const { setAlarm, youtubePlay, gpt, elements } = instance;
 
   elements.setButton.addEventListener("click", (event) => {
     event.preventDefault();
     setAlarm();
   });
 
-  bindLinkClicks("a[data-api], a[data-fetch]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
@@ -532,14 +537,14 @@ const start = (doc = document, fetcher = fetch) => {
     }
   });
 
-  bindLinkClicks("a[data-youtube-host]", (link) => {
+  bindLinkClicks(doc, "a[data-youtube-host]", (link) => {
     const host = link.dataset.youtubeHost;
     if (host) {
       youtubePlay(host);
     }
   });
 
-  bindLinkClicks("a[data-gpt-host]", (link) => {
+  bindLinkClicks(doc, "a[data-gpt-host]", (link) => {
     const host = link.dataset.gptHost;
     if (host) {
       gpt(host);
@@ -554,7 +559,17 @@ const start = (doc = document, fetcher = fetch) => {
       }
     });
   });
+};
 
+const start = (doc = document, fetcher = fetch) => {
+  const instance = initApp(doc, fetcher);
+  if (!instance) {
+    return null;
+  }
+
+  const { fetchLatest } = instance;
+
+  wireEvents(doc, fetcher, instance);
   fetchLatest();
 
   return instance;
