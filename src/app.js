@@ -13,29 +13,47 @@ export const start = (doc = document, fetcher = fetch) => {
     setAlarm();
   });
 
-  if (elements.youtubeUrl) {
-    doc.querySelectorAll("a[href^=\"javascript:youtubePlay\"]").forEach((link) => {
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        const host = link.getAttribute("href")?.match(/youtubePlay\('(.+)'\)/)?.[1];
-        if (host) {
-          youtubePlay(host);
-        }
-      });
+  doc.querySelectorAll("a[data-api], a[data-fetch]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
+      if (apiArgs) {
+        fetcher(apiUrl(apiArgs));
+      }
+      if (link.dataset.fetch) {
+        fetcher(link.dataset.fetch);
+      }
     });
-  }
+  });
 
-  if (elements.prompt) {
-    doc.querySelectorAll("a[href^=\"javascript:gpt\"]").forEach((link) => {
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        const host = link.getAttribute("href")?.match(/gpt\('(.+)'\)/)?.[1];
-        if (host) {
-          gpt(host);
-        }
-      });
+  doc.querySelectorAll("a[data-youtube-host]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const host = link.dataset.youtubeHost;
+      if (host) {
+        youtubePlay(host);
+      }
     });
-  }
+  });
+
+  doc.querySelectorAll("a[data-gpt-host]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const host = link.dataset.gptHost;
+      if (host) {
+        gpt(host);
+      }
+    });
+  });
+
+  [elements.speak, elements.speakTatami].forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (link.dataset.url) {
+        fetcher(link.dataset.url);
+      }
+    });
+  });
 
   fetchLatest();
 

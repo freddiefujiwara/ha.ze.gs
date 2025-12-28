@@ -29,8 +29,8 @@ const buildDocument = () => {
     <div id="Datetime"></div>
     <div id="Temperature"></div>
     <div id="Humidity"></div>
-    <a href="javascript:youtubePlay('192.168.1.22');">YT</a>
-    <a href="javascript:gpt('192.168.1.236');">GPT</a>
+    <a href="#" data-youtube-host="192.168.1.22">YT</a>
+    <a href="#" data-gpt-host="192.168.1.236">GPT</a>
   `;
   return document;
 };
@@ -42,9 +42,9 @@ describe("utility builders", () => {
 
   it("builds voice urls", () => {
     const urls = buildVoiceUrls("hello world\n");
-    expect(urls.speak).toContain("-h%2F192.168.1.22");
-    expect(urls.speak).toContain("-s%2Fhelloworld");
-    expect(urls.speakTatami).toContain("-h%2F192.168.1.236");
+    expect(urls.speak).toContain("http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.22");
+    expect(urls.speak).toContain("-s/helloworld");
+    expect(urls.speakTatami).toContain("http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.236");
   });
 
   it("updates voice links", () => {
@@ -54,8 +54,8 @@ describe("utility builders", () => {
 
     updateVoiceLinks("test", { speak, speakTatami });
 
-    expect(speak.getAttribute("href")).toContain("-s%2Ftest");
-    expect(speakTatami.getAttribute("href")).toContain("-s%2Ftest");
+    expect(speak.dataset.url).toContain("-s/test");
+    expect(speakTatami.dataset.url).toContain("-s/test");
   });
 
   it("builds alarm url", () => {
@@ -133,7 +133,7 @@ describe("app wiring", () => {
     document.getElementById("voicetext").value = "hello";
     document.getElementById("voicetext").dispatchEvent(new Event("input"));
 
-    expect(document.getElementById("speak").getAttribute("href")).toContain("-s%2Fhello");
+    expect(document.getElementById("speak").dataset.url).toContain("-s/hello");
 
     document.getElementById("alarmtext").value = "wake";
     await instance.setAlarm();
@@ -208,10 +208,10 @@ describe("app bootstrap", () => {
     document.getElementById("set").dispatchEvent(new Event("click"));
 
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
-    document.querySelector("a[href^=\"javascript:youtubePlay\"]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
 
     document.getElementById("prompt").value = "hi";
-    document.querySelector("a[href^=\"javascript:gpt\"]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-gpt-host]").dispatchEvent(new Event("click"));
 
     expect(instance).not.toBeNull();
     expect(fetcher).toHaveBeenCalled();
