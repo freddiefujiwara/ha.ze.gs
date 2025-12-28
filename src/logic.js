@@ -44,8 +44,10 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   return { videoId, url: `http://a.ze.gs/youtube-play/-h/${host}/-v/40/-i/${videoId}` };
 };
 
-export const buildGptUrl = (host, prompt) =>
-  `https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=${prompt}&i=${host}`;
+export const buildGptUrl = (host, prompt) => {
+  const sanitized = encodeURIComponent(prompt.replace(/[\s\n\r]/g, ""));
+  return `https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=${sanitized}&i=${host}`;
+};
 
 export const parseLatestPayload = (payload) => {
   const cleaned = payload.replace(/^a&&a\(/, "").replace(/\);$/, "");

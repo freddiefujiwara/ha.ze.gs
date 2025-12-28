@@ -80,8 +80,8 @@ describe("utility builders", () => {
   });
 
   it("builds gpt url", () => {
-    expect(buildGptUrl("192.168.1.22", "hello")).toBe(
-      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=hello&i=192.168.1.22",
+    expect(buildGptUrl("192.168.1.22", "hello world\n")).toBe(
+      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=helloworld&i=192.168.1.22",
     );
   });
 });
@@ -145,10 +145,10 @@ describe("app wiring", () => {
     await instance.youtubePlay("192.168.1.22");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
 
-    document.getElementById("prompt").value = "hello";
+    document.getElementById("prompt").value = "hello world";
     await instance.gpt("192.168.1.236");
     expect(fetcher).toHaveBeenCalledWith(
-      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=hello&i=192.168.1.236",
+      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=helloworld&i=192.168.1.236",
     );
 
     const latest = await instance.fetchLatest();
