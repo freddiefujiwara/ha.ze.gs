@@ -76,7 +76,7 @@ export const parseYouTubeId = (youtubeUrl) => {
 
 export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
-  return { videoId, url: `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}` };
+  return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
 
 export const buildGptUrl = (host, prompt) => {
@@ -129,8 +129,7 @@ export const initApp = (doc, fetcher = fetch) => {
     if (!youtubeUrl) {
       return null;
     }
-    const { url } = buildYouTubePlayUrl(host, youtubeUrl.value);
-    return fetcher(url);
+    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
   };
 
   const gpt = (host) => {

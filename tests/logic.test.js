@@ -77,10 +77,9 @@ describe("utility builders", () => {
   });
 
   it("builds youtube play url", () => {
-    expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123")).toEqual({
-      videoId: "abc123",
-      url: "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
-    });
+    expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123")).toBe(
+      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+    );
   });
 
   it("builds gpt url", () => {
