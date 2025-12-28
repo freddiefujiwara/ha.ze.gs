@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
-const publicDir = join(rootDir, "public");
+const srcDir = join(rootDir, "src");
 const distDir = join(rootDir, "dist");
 
 const stripExports = (code) => code.replace(/\bexport\s+(const|function|class)\s+/g, "$1 ");
@@ -27,10 +27,10 @@ const inlineAssets = (html, { css, script }) => {
 
 const build = async () => {
   const [html, css, logic, app] = await Promise.all([
-    readFile(join(publicDir, "index.html"), "utf8"),
-    readFile(join(publicDir, "styles.css"), "utf8"),
-    readFile(join(publicDir, "logic.js"), "utf8"),
-    readFile(join(publicDir, "app.js"), "utf8"),
+    readFile(join(srcDir, "index.html"), "utf8"),
+    readFile(join(srcDir, "styles.css"), "utf8"),
+    readFile(join(srcDir, "logic.js"), "utf8"),
+    readFile(join(srcDir, "app.js"), "utf8"),
   ]);
 
   const logicScript = stripExports(logic).trim();

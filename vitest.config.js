@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       all: true,
-      include: ["public/**/*.js"],
+      include: ["src/**/*.js"],
       lines: 100,
       statements: 100,
       branches: 100,

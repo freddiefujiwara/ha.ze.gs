@@ -12,7 +12,7 @@ import {
   parseYouTubeId,
   updateStatusCells,
   updateVoiceLinks,
-} from "../public/logic.js";
+} from "../src/logic.js";
 
 const buildDocument = () => {
   const document = window.document.implementation.createHTMLDocument("test");
@@ -201,7 +201,7 @@ describe("app bootstrap", () => {
 
     vi.stubGlobal("fetch", fetcher);
 
-    const { start } = await import("../public/app.js");
+    const { start } = await import("../src/app.js");
     const instance = start(document, fetcher);
 
     document.getElementById("alarmtext").value = "wake";

@@ -11,10 +11,10 @@ This is a small web page to control home devices and show simple status values.
 - Shows the latest date/time, temperature, and humidity.
 
 ## Files
-- `public/index.html`: the page layout (table UI).
-- `public/styles.css`: the original page styles.
-- `public/logic.js`: the main browser logic (split from inline script).
-- `public/app.js`: wires the DOM and exposes browser globals.
+- `src/index.html`: the page layout (table UI).
+- `src/styles.css`: the original page styles.
+- `src/logic.js`: the main browser logic (split from inline script).
+- `src/app.js`: wires the DOM and exposes browser globals.
 - `build.js`: creates a single-file `dist/index.html`.
 
 ## Development
