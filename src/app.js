@@ -8,42 +8,42 @@ export const start = (doc = document, fetcher = fetch) => {
 
   const { setAlarm, youtubePlay, gpt, fetchLatest, elements } = instance;
 
+  const bindLinkClicks = (selector, handler) => {
+    doc.querySelectorAll(selector).forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        handler(link);
+      });
+    });
+  };
+
   elements.setButton.addEventListener("click", (event) => {
     event.preventDefault();
     setAlarm();
   });
 
-  doc.querySelectorAll("a[data-api], a[data-fetch]").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
-      if (apiArgs) {
-        fetcher(apiUrl(apiArgs));
-      }
-      if (link.dataset.fetch) {
-        fetcher(link.dataset.fetch);
-      }
-    });
+  bindLinkClicks("a[data-api], a[data-fetch]", (link) => {
+    const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
+    if (apiArgs) {
+      fetcher(apiUrl(apiArgs));
+    }
+    if (link.dataset.fetch) {
+      fetcher(link.dataset.fetch);
+    }
   });
 
-  doc.querySelectorAll("a[data-youtube-host]").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const host = link.dataset.youtubeHost;
-      if (host) {
-        youtubePlay(host);
-      }
-    });
+  bindLinkClicks("a[data-youtube-host]", (link) => {
+    const host = link.dataset.youtubeHost;
+    if (host) {
+      youtubePlay(host);
+    }
   });
 
-  doc.querySelectorAll("a[data-gpt-host]").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const host = link.dataset.gptHost;
-      if (host) {
-        gpt(host);
-      }
-    });
+  bindLinkClicks("a[data-gpt-host]", (link) => {
+    const host = link.dataset.gptHost;
+    if (host) {
+      gpt(host);
+    }
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {

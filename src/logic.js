@@ -1,10 +1,23 @@
+const VOICE_HOSTS = {
+  speak: "192.168.1.22",
+  speakTatami: "192.168.1.236",
+};
+const ALARM_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
+const GPT_HOOK_URL = "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9";
+const STATUS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+
+const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
+
 export const apiUrl = (args) => `http://a.ze.gs/${args.join("/")}`;
 
 export const buildVoiceUrls = (voiceText) => {
-  const sanitized = encodeURIComponent(voiceText.replace(/[\s\n\r]/g, ""));
+  const sanitized = sanitizeText(voiceText);
   return {
-    speak: `http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.22/-v/60/-s/${sanitized}`,
-    speakTatami: `http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.236/-v/60/-s/${sanitized}`,
+    speak: `http://a.ze.gs/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
+    speakTatami: `http://a.ze.gs/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
   };
 };
 
@@ -17,23 +30,32 @@ export const updateVoiceLinks = (voiceText, elements) => {
 };
 
 export const buildAlarmUrl = (hour, minute, text) => {
-  const sanitized = encodeURIComponent(text.replace(/[\s\n\r]/g, ""));
-  return `https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec?time=${hour}:${minute}:00&text=${sanitized}`;
+  const sanitized = sanitizeText(text);
+  return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
 
 export const parseYouTubeId = (youtubeUrl) => {
-  if (youtubeUrl.match(/^https:\/\/youtu.be\//)) {
-    return youtubeUrl.split("/")[3];
-  }
+  try {
+    const parsed = new URL(youtubeUrl);
+    if (parsed.hostname === "youtu.be") {
+      const id = parsed.pathname.split("/")[1];
+      return id || "";
+    }
 
-  if (youtubeUrl.match(/^https:\/\/(music|www|m).youtube.com\/watch\?v=/)) {
-    const videoId = youtubeUrl.split("v=")[1];
-    const ampersandPosition = videoId.indexOf("&");
-    return ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
-  }
+    if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
+      return "";
+    }
 
-  if (youtubeUrl.match(/^https:\/\/(www\.)?youtube.com\/(live|shorts)\//)) {
-    return youtubeUrl.split("/")[4].split("?")[0];
+    if (parsed.pathname === "/watch") {
+      return parsed.searchParams.get("v") || "";
+    }
+
+    if (parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/")) {
+      const id = parsed.pathname.split("/")[2];
+      return id || "";
+    }
+  } catch (error) {
+    return "";
   }
 
   return "";
@@ -45,8 +67,8 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
 };
 
 export const buildGptUrl = (host, prompt) => {
-  const sanitized = encodeURIComponent(prompt.replace(/[\s\n\r]/g, ""));
-  return `https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=${sanitized}&i=${host}`;
+  const sanitized = sanitizeText(prompt);
+  return `${GPT_HOOK_URL}?p=${sanitized}&i=${host}`;
 };
 
 export const parseLatestPayload = (payload) => {
@@ -56,7 +78,7 @@ export const parseLatestPayload = (payload) => {
 
 export const fetchLatestStatus = async (fetcher) => {
   const response = await fetcher(
-    "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?callback=a",
+    `${STATUS_SCRIPT_URL}?callback=a`,
   );
   const payload = await response.text();
   return parseLatestPayload(payload);
@@ -69,15 +91,8 @@ export const updateStatusCells = (latest, elements) => {
 };
 
 export const initApp = (doc, fetcher = fetch) => {
-  const voicetext = doc.getElementById("voicetext");
-  const speak = doc.getElementById("speak");
-  const speakTatami = doc.getElementById("speak_tatami");
-  const hour = doc.getElementById("hour");
-  const min = doc.getElementById("min");
-  const alarmtext = doc.getElementById("alarmtext");
-  const setButton = doc.getElementById("set");
-  const youtubeUrl = doc.getElementById("youtube_url");
-  const prompt = doc.getElementById("prompt");
+  const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+  const requiredElements = Object.fromEntries(requiredIds.map((id) => [id, doc.getElementById(id)]));
 
   const statusCells = {
     Datetime: doc.getElementById("Datetime"),
@@ -85,9 +100,13 @@ export const initApp = (doc, fetcher = fetch) => {
     Humidity: doc.getElementById("Humidity"),
   };
 
-  if (!voicetext || !speak || !speakTatami || !hour || !min || !alarmtext || !setButton) {
+  if (Object.values(requiredElements).some((element) => !element)) {
     return null;
   }
+
+  const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
+  const youtubeUrl = doc.getElementById("youtube_url");
+  const prompt = doc.getElementById("prompt");
 
   voicetext.addEventListener("input", () => {
     updateVoiceLinks(voicetext.value, { speak, speakTatami });
