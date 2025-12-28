@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <title>ha.ze.gs</title>
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>Switch</th>
+          <th><a href="javascript:api(['hue','lights','off']);">All light OFF</a></th>
+          <th>&nbsp;</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="Living">Living</td>
+          <td><a href="javascript:api(['switchbot-command','-d','02-202102231815-37239298','-c','turnOn']);">On/Off</a></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td id="Dining">Dining</td>
+          <td><a href="javascript:api(['hue','lights','13,14,15,28,29','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','13,14,15,28,29','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Tatami">Tatami</td>
+          <td><a href="javascript:api(['switchbot-command','-d','ECCC4C8C52C3','-c','turnOn']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['switchbot-command','-d','ECCC4C8C52C3','-c','turnOff']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Downright">Down right</td>
+          <td><a href="javascript:api(['hue','lights','27','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','27','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Downleft">Down left</td>
+          <td><a href="javascript:api(['hue','lights','26','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','26','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Downback">Down back</td>
+          <td><a href="javascript:api(['hue','lights','7','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','7','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Washroom">Washroom</td>
+          <td><a href="javascript:api(['hue','lights','22','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','22','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Bathroom">Bathroom</td>
+          <td><a href="javascript:api(['hue','lights','8,9','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','8,9','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Corridor">Corridor</td>
+          <td><a href="javascript:api(['hue','lights','21,16','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','21,16','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Restroom">Restroom</td>
+          <td><a href="javascript:api(['hue','lights','10','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','10','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="Chiemi">Chiemi</td>
+          <td><a href="javascript:api(['hue','lights','18,19,20','on']);">On</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['hue','lights','18,19,20','off']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="AC"><a href="javascript:fetch('https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=control');">A/C</a></td>
+          <td><a href="javascript:api(['switchbot-ac','-d','02-202307290753-22894539','-a','28,2,1,on']);fetch('https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=cool');">Cool</a></td>
+          <td><a href="javascript:api(['switchbot-ac','-d','02-202307290753-22894539','-a','28,5,1,on']);fetch('https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=hot');">Hot</a></td>
+          <td><a href="javascript:api(['switchbot-ac','-d','02-202307290753-22894539','-a','25,2,1,off']);fetch('https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=off');">Off</a></td>
+        </tr>
+        <tr>
+          <td id="TatamiAC">Tatami A/C</td>
+          <td><a href="javascript:api(['switchbot-custom','-d','03-202401251013-58699638','-c','Cool'])">Cool</a></td>
+          <td><a href="javascript:api(['switchbot-custom','-d','03-202401251013-58699638','-c','Hot'])">Hot</a></td>
+          <td><a href="javascript:api(['switchbot-custom','-d','03-202401251013-58699638','-c','Off'])">Off</a></td>
+        </tr>
+        <tr>
+          <td>Tool</td>
+          <td><a href="javascript:api(['switchbot-command','-d','D23403D2D43D','-c','press']);">HeatFloor</a></td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:api(['google-home-speaker-wrapper','-h','192.168.1.22','-v',60,'-s','%E3%83%81%E3%82%A8%E3%83%9F%E3%81%95%E3%82%93%E3%80%81%E3%83%9E%E3%83%9E%E3%81%95%E3%82%93%E3%80%81%E3%83%91%E3%83%91%E3%81%8C%E5%88%B0%E7%9D%80%E3%81%97%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82%E6%BA%96%E5%82%99%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82']);">CarArrives</a></td>
+        </tr>
+        <tr>
+          <td id="Fan">Fan</td>
+          <td><a href="javascript:api(['switchbot-command','-d','03-202401251013-89002900','-c','turnOn']);">On/Off</a></td>
+          <td><a href="javascript:api(['switchbot-command','-d','03-202401251013-89002900','-c','highSpeed']);">Turbo</a></td>
+          <td><a href="javascript:api(['switchbot-command','-d','03-202401251013-89002900','-c','swing']);">Swing</a></td>
+        </tr>
+        <tr>
+          <td id="NW">Nest WiFi</td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.22','volumeup']);">+</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.22','volumedown']);">-</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.22','stop']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="TW">Tatami WiFi</td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.236','volumeup']);">+</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.236','volumedown']);">-</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.236','stop']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="CC">TV</td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.219','volumeup']);">+</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.219','volumedown']);">-</a></td>
+          <td><a href="javascript:api(['catt','-d','192.168.1.219','stop']);">Off</a></td>
+        </tr>
+        <tr>
+          <td id="YouTube"><a href="javascript:youtubePlay('192.168.1.219');">YouTube</a></td>
+          <td><textarea id="youtube_url"></textarea></td>
+          <td><a href="javascript:youtubePlay('192.168.1.22');">Nest Wifi</a></td>
+          <td><a href="javascript:youtubePlay('192.168.1.236');">Tatami WiFi</a></td>
+        </tr>
+        <tr>
+          <td id="Voice">Voice</td>
+          <td><textarea id="voicetext"></textarea></td>
+          <td><a id="speak" href="#">Nest Wifi</a></td>
+          <td><a id="speak_tatami" href="#">Tatami</a></td>
+        </tr>
+        <tr>
+          <td id="YouTube">GPT</td>
+          <td><textarea id="prompt"></textarea></td>
+          <td><a href="javascript:gpt('192.168.1.22');">Nest Wifi</a></td>
+          <td><a href="javascript:gpt('192.168.1.236');">Tatami WiFi</a></td>
+        </tr>
+        <tr>
+          <td id="Alarm">Alarm</td>
+          <td>
+            <select id="hour">
+              <option value="00">00</option>
+              <option value="01">01</option>
+              <option value="02">02</option>
+              <option value="03">03</option>
+              <option value="04">04</option>
+              <option value="05">05</option>
+              <option value="06">06</option>
+              <option value="07">07</option>
+              <option value="08">08</option>
+              <option value="09">09</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="16">16</option>
+              <option value="17">17</option>
+              <option value="18">18</option>
+              <option value="19">19</option>
+              <option value="20">20</option>
+              <option value="21">21</option>
+              <option value="22">22</option>
+              <option value="23">23</option>
+            </select>
+            :
+            <select id="min">
+              <option value="00">00</option>
+              <option value="01">01</option>
+              <option value="02">02</option>
+              <option value="03">03</option>
+              <option value="04">04</option>
+              <option value="05">05</option>
+              <option value="06">06</option>
+              <option value="07">07</option>
+              <option value="08">08</option>
+              <option value="09">09</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="16">16</option>
+              <option value="17">17</option>
+              <option value="18">18</option>
+              <option value="19">19</option>
+              <option value="20">20</option>
+              <option value="21">21</option>
+              <option value="22">22</option>
+              <option value="23">23</option>
+              <option value="24">24</option>
+              <option value="25">25</option>
+              <option value="26">26</option>
+              <option value="27">27</option>
+              <option value="28">28</option>
+              <option value="29">29</option>
+              <option value="30">30</option>
+              <option value="31">31</option>
+              <option value="32">32</option>
+              <option value="33">33</option>
+              <option value="34">34</option>
+              <option value="35">35</option>
+              <option value="36">36</option>
+              <option value="37">37</option>
+              <option value="38">38</option>
+              <option value="39">39</option>
+              <option value="40">40</option>
+              <option value="41">41</option>
+              <option value="42">42</option>
+              <option value="43">43</option>
+              <option value="44">44</option>
+              <option value="45">45</option>
+              <option value="46">46</option>
+              <option value="47">47</option>
+              <option value="48">48</option>
+              <option value="49">49</option>
+              <option value="50">50</option>
+              <option value="51">51</option>
+              <option value="52">52</option>
+              <option value="53">53</option>
+              <option value="54">54</option>
+              <option value="55">55</option>
+              <option value="56">56</option>
+              <option value="57">57</option>
+              <option value="58">58</option>
+              <option value="59">59</option>
+            </select>
+          </td>
+          <td><textarea id="alarmtext"></textarea></td>
+          <td><a id="set" href="javascript:setAlarm();">Set</a></td>
+        </tr>
+        <tr>
+          <td><a href="http://g.ze.gs/nasne_home/index_pc.html" target="_blank">nasne</a></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td id="AirCondition">AirCondition</td>
+          <td id="Datetime">&nbsp;</td>
+          <td id="Temperature">&nbsp;</td>
+          <td id="Humidity">&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
