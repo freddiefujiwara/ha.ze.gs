@@ -80,14 +80,16 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
 
+const STATUS_CALLBACK = "__statusCallback";
+
 export const parseLatestPayload = (payload) => {
-  const cleaned = payload.replace(/^a&&a\(/, "").replace(/\);$/, "");
+  const cleaned = payload.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "").replace(/\);$/, "");
   const parsed = JSON.parse(cleaned);
   return Array.isArray(parsed) ? parsed.pop() : null;
 };
 
 export const fetchLatestStatus = async (fetcher) => {
-  const response = await fetcher(buildStatusUrl({ callback: "a" }));
+  const response = await fetcher(buildStatusUrl({ callback: STATUS_CALLBACK }));
   const payload = await response.text();
   return parseLatestPayload(payload);
 };

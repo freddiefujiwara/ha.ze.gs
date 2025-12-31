@@ -92,24 +92,24 @@ describe("utility builders", () => {
 
 describe("payload parsing", () => {
   it("parses latest payload", () => {
-    const payload = "a&&a([{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}]);";
+    const payload = "__statusCallback&&__statusCallback([{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}]);";
     expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humid: "50" });
   });
 
   it("returns null for non-array payloads", () => {
-    const payload = "a&&a({\"Date\":\"now\"});";
+    const payload = "__statusCallback&&__statusCallback({\"Date\":\"now\"});";
     expect(parseLatestPayload(payload)).toBeNull();
   });
 
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);"),
+      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);"),
     });
 
     await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });
     expect(fetcher).toHaveBeenCalledOnce();
     expect(fetcher.mock.calls[0][0]).toBe(
-      "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?callback=a",
+      "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?callback=__statusCallback",
     );
   });
 
@@ -146,7 +146,9 @@ describe("app wiring", () => {
   let fetcher;
 
   beforeEach(() => {
-    fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
+    fetcher = vi.fn().mockResolvedValue({
+      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);"),
+    });
   });
 
   it("initializes and wires inputs", async () => {
@@ -223,7 +225,9 @@ describe("app bootstrap", () => {
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
     const document = buildDocument();
-    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);") });
 
     vi.stubGlobal("fetch", fetcher);
 
@@ -269,7 +273,9 @@ describe("app bootstrap", () => {
       <a href="#" data-youtube-host="">NoHost</a>
     `;
 
-    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);") });
 
     vi.stubGlobal("fetch", fetcher);
     await import("../src/app.js");
