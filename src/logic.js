@@ -13,7 +13,7 @@ const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
-const buildStatusUrl = (params = {}) => {
+export const buildStatusUrl = (params = {}) => {
   const url = new URL(STATUS_SCRIPT_URL);
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.set(key, value);

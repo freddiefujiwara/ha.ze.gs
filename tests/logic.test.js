@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   apiUrl,
   buildAlarmUrl,
+  buildStatusUrl,
   buildVoiceUrls,
   buildYouTubePlayUrl,
   fetchLatestStatus,
@@ -264,6 +265,7 @@ describe("app bootstrap", () => {
       <div id="Humid"></div>
       <a href="#" data-api='["hue","lights","off"]'>API</a>
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
+      <a href="#" data-status-action="control">Status</a>
       <a href="#" data-youtube-host="">NoHost</a>
     `;
 
@@ -274,6 +276,7 @@ describe("app bootstrap", () => {
 
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
 
     window.api(["hue", "lights", "on"]);
@@ -283,6 +286,7 @@ describe("app bootstrap", () => {
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
     expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
+    expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
 
     vi.unstubAllGlobals();
   });

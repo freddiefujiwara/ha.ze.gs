@@ -1,4 +1,4 @@
-import { apiUrl, initApp } from "./logic.js";
+import { apiUrl, buildStatusUrl, initApp } from "./logic.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -17,13 +17,16 @@ export const wireEvents = (doc, fetcher, instance) => {
     setAlarm();
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
     }
     if (link.dataset.fetch) {
       fetcher(link.dataset.fetch);
+    }
+    if (link.dataset.statusAction) {
+      fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
     }
   });
 
