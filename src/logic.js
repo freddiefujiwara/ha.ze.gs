@@ -1,7 +1,12 @@
 const API_BASE_URL = "http://a.ze.gs";
+export const DEVICE_HOSTS = {
+  nest: "192.168.1.22",
+  tatami: "192.168.1.236",
+  tv: "192.168.1.219",
+};
 const VOICE_HOSTS = {
-  speak: "192.168.1.22",
-  speakTatami: "192.168.1.236",
+  speak: DEVICE_HOSTS.nest,
+  speakTatami: DEVICE_HOSTS.tatami,
 };
 const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
@@ -81,12 +86,17 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
 export const buildCarArrivalArgs = () => [
   "google-home-speaker-wrapper",
   "-h",
-  "192.168.1.22",
+  DEVICE_HOSTS.nest,
   "-v",
   60,
   "-s",
   encodeURIComponent(CAR_ARRIVAL_MESSAGE),
 ];
+
+export const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
+
+export const replaceHostTokens = (args) =>
+  args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
 
 export const parseLatestPayload = (payload) => {
   const cleaned = payload.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "").replace(/\);$/, "");

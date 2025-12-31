@@ -6,6 +6,8 @@ import {
   buildStatusUrl,
   buildVoiceUrls,
   buildYouTubePlayUrl,
+  replaceHostTokens,
+  resolveHost,
   fetchLatestStatus,
   initApp,
   parseLatestPayload,
@@ -88,6 +90,16 @@ describe("utility builders", () => {
     expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123")).toBe(
       "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     );
+  });
+
+  it("resolves host aliases", () => {
+    expect(resolveHost("nest")).toBe("192.168.1.22");
+    expect(resolveHost("192.168.1.99")).toBe("192.168.1.99");
+  });
+
+  it("replaces host tokens in api args", () => {
+    const args = ["catt", "-d", "host:tv", "stop", 1];
+    expect(replaceHostTokens(args)).toEqual(["catt", "-d", "192.168.1.219", "stop", 1]);
   });
 });
 
@@ -275,6 +287,7 @@ describe("app bootstrap", () => {
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-status-action="control">Status</a>
       <a href="#" data-youtube-host="">NoHost</a>
+      <a href="#" data-youtube-key="nest">YoutubeKey</a>
     `;
 
     const fetcher = vi
@@ -289,6 +302,7 @@ describe("app bootstrap", () => {
     document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-youtube-key]").dispatchEvent(new Event("click"));
 
     window.api(["hue", "lights", "on"]);
     window.setAlarm();

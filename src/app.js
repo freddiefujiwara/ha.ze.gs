@@ -1,4 +1,4 @@
-import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "./logic.js";
+import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp, replaceHostTokens, resolveHost } from "./logic.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -20,7 +20,7 @@ export const wireEvents = (doc, fetcher, instance) => {
   bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
-      fetcher(apiUrl(apiArgs));
+      fetcher(apiUrl(replaceHostTokens(apiArgs)));
     }
     if (link.dataset.messageKey === "car-arrival") {
       fetcher(apiUrl(buildCarArrivalArgs()));
@@ -33,8 +33,8 @@ export const wireEvents = (doc, fetcher, instance) => {
     }
   });
 
-  bindLinkClicks(doc, "a[data-youtube-host]", (link) => {
-    const host = link.dataset.youtubeHost;
+  bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", (link) => {
+    const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (host) {
       youtubePlay(host);
     }
