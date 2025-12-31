@@ -40,7 +40,7 @@ export const wireEvents = (doc, fetcher, instance) => {
       return;
     }
     const result = await youtubePlay(host);
-    if (result === null) {
+    if (result) {
       elements.youtubeUrl.value = "";
     }
   });

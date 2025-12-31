@@ -195,6 +195,7 @@ describe("app wiring", () => {
     const callsBeforeInvalid = fetcher.mock.calls.length;
     document.getElementById("youtube_url").value = "https://example.com/video";
     expect(instance.youtubePlay("192.168.1.22")).toBeNull();
+    expect(document.getElementById("youtube_url").value).toBe("");
     expect(fetcher.mock.calls).toHaveLength(callsBeforeInvalid);
 
     const latest = await instance.fetchLatest();

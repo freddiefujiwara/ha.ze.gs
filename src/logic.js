@@ -166,10 +166,16 @@ export const initApp = (doc, fetcher = fetch) => {
 
   const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
 
-  const youtubePlay = (host) =>
-    youtubeUrl && parseYouTubeId(youtubeUrl.value)
-      ? fetcher(buildYouTubePlayUrl(host, youtubeUrl.value))
-      : null;
+  const youtubePlay = (host) => {
+    if (!youtubeUrl) {
+      return null;
+    }
+    if (!parseYouTubeId(youtubeUrl.value)) {
+      youtubeUrl.value = "";
+      return null;
+    }
+    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
+  };
 
   const fetchLatest = async () => {
     if (Object.values(statusCells).some((element) => !element)) {
