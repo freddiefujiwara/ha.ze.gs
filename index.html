@@ -535,39 +535,41 @@ const bindLinkClicks = (doc, selector, handler) => {
 const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, youtubePlay, elements } = instance;
 
-  elements.setButton.addEventListener("click", (event) => {
+  elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    setAlarm();
+    await setAlarm();
+    elements.alarmtext.value = "";
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
-      fetcher(apiUrl(replaceHostTokens(apiArgs)));
+      await fetcher(apiUrl(replaceHostTokens(apiArgs)));
     }
     if (link.dataset.messageKey === "car-arrival") {
-      fetcher(apiUrl(buildCarArrivalArgs()));
+      await fetcher(apiUrl(buildCarArrivalArgs()));
     }
     if (link.dataset.fetch) {
-      fetcher(link.dataset.fetch);
+      await fetcher(link.dataset.fetch);
     }
     if (link.dataset.statusAction) {
-      fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
+      await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
     }
   });
 
-  bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", (link) => {
+  bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (host) {
-      youtubePlay(host);
+      await youtubePlay(host);
     }
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
-    link.addEventListener("click", (event) => {
+    link.addEventListener("click", async (event) => {
       event.preventDefault();
       if (link.dataset.url) {
-        fetcher(link.dataset.url);
+        await fetcher(link.dataset.url);
+        elements.voicetext.value = "";
       }
     });
   });
