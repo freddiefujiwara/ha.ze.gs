@@ -167,7 +167,9 @@ export const initApp = (doc, fetcher = fetch) => {
   const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
 
   const youtubePlay = (host) =>
-    youtubeUrl ? fetcher(buildYouTubePlayUrl(host, youtubeUrl.value)) : null;
+    youtubeUrl && parseYouTubeId(youtubeUrl.value)
+      ? fetcher(buildYouTubePlayUrl(host, youtubeUrl.value))
+      : null;
 
   const fetchLatest = async () => {
     if (Object.values(statusCells).some((element) => !element)) {

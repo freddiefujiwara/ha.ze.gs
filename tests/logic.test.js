@@ -192,6 +192,11 @@ describe("app wiring", () => {
     await instance.youtubePlay("192.168.1.22");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
 
+    const callsBeforeInvalid = fetcher.mock.calls.length;
+    document.getElementById("youtube_url").value = "https://example.com/video";
+    expect(instance.youtubePlay("192.168.1.22")).toBeNull();
+    expect(fetcher.mock.calls).toHaveLength(callsBeforeInvalid);
+
     const latest = await instance.fetchLatest();
     expect(latest).toEqual({ Date: "now" });
     expect(document.getElementById("Date").innerText).toBe("now");
