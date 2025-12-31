@@ -238,6 +238,8 @@ describe("app wiring", () => {
 });
 
 describe("app bootstrap", () => {
+  const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
     const document = buildDocument();
@@ -252,15 +254,21 @@ describe("app bootstrap", () => {
 
     document.getElementById("alarmtext").value = "wake";
     document.getElementById("set").dispatchEvent(new Event("click"));
+    await flushPromises();
+    expect(document.getElementById("alarmtext").value).toBe("");
 
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
 
+    document.getElementById("voicetext").value = "hello";
     document.getElementById("speak").dataset.url = "http://example.com/speak";
     document.getElementById("speak").dispatchEvent(new Event("click"));
+    await flushPromises();
+    expect(document.getElementById("voicetext").value).toBe("");
 
     document.getElementById("speak_tatami").dataset.url = "http://example.com/tatami";
     document.getElementById("speak_tatami").dispatchEvent(new Event("click"));
+    await flushPromises();
 
     expect(instance).not.toBeNull();
     expect(fetcher).toHaveBeenCalled();
@@ -304,6 +312,7 @@ describe("app bootstrap", () => {
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-key]").dispatchEvent(new Event("click"));
+    await flushPromises();
 
     window.api(["hue", "lights", "on"]);
     window.setAlarm();
