@@ -9,18 +9,15 @@ const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
 const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
+const STATUS_CALLBACK = "__statusCallback";
+const STATUS_KEYS = ["Date", "Temperature", "Humid"];
+const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
 
 const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
-export const buildStatusUrl = (params = {}) => {
-  const url = new URL(STATUS_SCRIPT_URL);
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
-  });
-  return url.toString();
-};
+export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
 const padTime = (value) => String(value).padStart(2, "0");
 
@@ -91,8 +88,6 @@ export const buildCarArrivalArgs = () => [
   encodeURIComponent(CAR_ARRIVAL_MESSAGE),
 ];
 
-const STATUS_CALLBACK = "__statusCallback";
-
 export const parseLatestPayload = (payload) => {
   const cleaned = payload.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "").replace(/\);$/, "");
   const parsed = JSON.parse(cleaned);
@@ -110,40 +105,36 @@ const formatDateTimeLocal = (value) => {
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  });
-  const parts = formatter.formatToParts(parsed);
-  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${lookup.month} ${lookup.day} ${lookup.hour}:${lookup.minute}`;
+  })
+    .format(parsed)
+    .replace(",", "");
 };
 
 export const updateStatusCells = (latest, elements) => {
-  elements.Date.innerText = formatDateTimeLocal(latest.Date);
-  elements.Temperature.innerText = latest.Temperature;
-  elements.Humid.innerText = latest.Humid;
+  STATUS_KEYS.forEach((key) => {
+    elements[key].innerText = key === "Date" ? formatDateTimeLocal(latest[key]) : latest[key];
+  });
 };
 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  const hourValue = padTime(now.getHours());
-  const minuteValue = padTime(now.getMinutes());
-
-  if (hourSelect.querySelector(`option[value="${hourValue}"]`)) {
-    hourSelect.value = hourValue;
-  }
-  if (minuteSelect.querySelector(`option[value="${minuteValue}"]`)) {
-    minuteSelect.value = minuteValue;
-  }
+  const setIfExists = (select, value) => {
+    if (select.querySelector(`option[value="${value}"]`)) {
+      select.value = value;
+    }
+  };
+  setIfExists(hourSelect, padTime(now.getHours()));
+  setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
 
 export const initApp = (doc, fetcher = fetch) => {
-  const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-  const requiredElements = getRequiredElements(doc, requiredIds);
-  const statusCells = getRequiredElements(doc, ["Date", "Temperature", "Humid"]);
+  const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
+  const statusCells = getRequiredElements(doc, STATUS_KEYS);
 
   if (Object.values(requiredElements).some((element) => !element)) {
     return null;
