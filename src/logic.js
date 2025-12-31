@@ -13,6 +13,8 @@ const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
+const hasMissingElements = (elements) => Object.values(elements).some((element) => !element);
+
 const buildStatusUrl = (params = {}) => {
   const url = new URL(STATUS_SCRIPT_URL);
   Object.entries(params).forEach(([key, value]) => {
@@ -127,43 +129,52 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   }
 };
 
+const setupVoiceInput = (voicetext, links) => {
+  voicetext.addEventListener("input", () => {
+    updateVoiceLinks(voicetext.value, links);
+  });
+};
+
+const buildAlarmSetter = (hour, min, alarmtext, fetcher) => () => {
+  const url = buildAlarmUrl(hour.value, min.value, alarmtext.value);
+  return fetcher(url);
+};
+
+const buildYouTubePlayer = (youtubeUrl, fetcher) => (host) => {
+  if (!youtubeUrl) {
+    return null;
+  }
+  return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
+};
+
+const buildStatusFetcher = (statusCells, fetcher) => async () => {
+  if (hasMissingElements(statusCells)) {
+    return null;
+  }
+  const latest = await fetchLatestStatus(fetcher);
+  updateStatusCells(latest, statusCells);
+  return latest;
+};
+
 export const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
   const requiredElements = getRequiredElements(doc, requiredIds);
-
   const statusCells = getRequiredElements(doc, ["Date", "Temperature", "Humid"]);
 
-  if (Object.values(requiredElements).some((element) => !element)) {
+  if (hasMissingElements(requiredElements)) {
     return null;
   }
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
+
   setAlarmDefaults(hour, min);
-  voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, { speak, speakTatami });
-  });
 
-  const setAlarm = () => {
-    const url = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    return fetcher(url);
-  };
+  setupVoiceInput(voicetext, { speak, speakTatami });
 
-  const youtubePlay = (host) => {
-    if (!youtubeUrl) {
-      return null;
-    }
-    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
-  };
-
-  const fetchLatest = async () => {
-    if (Object.values(statusCells).some((element) => !element)) {
-      return null;
-    }
-    const latest = await fetchLatestStatus(fetcher);
-    updateStatusCells(latest, statusCells);
-    return latest;
-  };
+  const setAlarm = buildAlarmSetter(hour, min, alarmtext, fetcher);
+  const youtubePlay = buildYouTubePlayer(youtubeUrl, fetcher);
+  const fetchLatest = buildStatusFetcher(statusCells, fetcher);
 
   return {
     setAlarm,
