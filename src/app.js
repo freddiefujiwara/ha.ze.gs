@@ -1,4 +1,4 @@
-import { apiUrl, initApp } from "./logic.js";
+import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp, parseYouTubeId, replaceHostTokens, resolveHost } from "./logic.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -10,42 +10,52 @@ export const bindLinkClicks = (doc, selector, handler) => {
 };
 
 export const wireEvents = (doc, fetcher, instance) => {
-  const { setAlarm, youtubePlay, gpt, elements } = instance;
+  const { setAlarm, youtubePlay, elements } = instance;
 
-  elements.setButton.addEventListener("click", (event) => {
+  elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    setAlarm();
+    await setAlarm();
+    elements.alarmtext.value = "";
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch]", (link) => {
-    const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
-    if (apiArgs) {
-      fetcher(apiUrl(apiArgs));
+  elements.youtubeUrl.addEventListener("blur", () => {
+    if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
+      elements.youtubeUrl.value = "";
+    }
+  });
+
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
+    if (link.dataset.api) {
+      await fetcher(apiUrl(replaceHostTokens(JSON.parse(link.dataset.api))));
+    }
+    if (link.dataset.messageKey === "car-arrival") {
+      await fetcher(apiUrl(buildCarArrivalArgs()));
     }
     if (link.dataset.fetch) {
-      fetcher(link.dataset.fetch);
+      await fetcher(link.dataset.fetch);
+    }
+    if (link.dataset.statusAction) {
+      await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
     }
   });
 
-  bindLinkClicks(doc, "a[data-youtube-host]", (link) => {
-    const host = link.dataset.youtubeHost;
-    if (host) {
-      youtubePlay(host);
+  bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
+    const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
+    if (!host) {
+      return;
     }
-  });
-
-  bindLinkClicks(doc, "a[data-gpt-host]", (link) => {
-    const host = link.dataset.gptHost;
-    if (host) {
-      gpt(host);
+    const result = await youtubePlay(host);
+    if (result) {
+      elements.youtubeUrl.value = "";
     }
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
-    link.addEventListener("click", (event) => {
+    link.addEventListener("click", async (event) => {
       event.preventDefault();
       if (link.dataset.url) {
-        fetcher(link.dataset.url);
+        await fetcher(link.dataset.url);
+        elements.voicetext.value = "";
       }
     });
   });
@@ -74,5 +84,4 @@ if (typeof window !== "undefined") {
 
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
-  window.gpt = (host) => instance?.gpt(host);
 }

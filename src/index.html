@@ -86,13 +86,13 @@
         </tr>
         <tr>
           <td id="AC">
-            <a href="#" data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=control">A/C</a>
+            <a href="#" data-status-action="control">A/C</a>
           </td>
           <td>
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,2,1,on"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=cool"
+              data-status-action="cool"
               >Cool</a
             >
           </td>
@@ -100,7 +100,7 @@
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,5,1,on"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=hot"
+              data-status-action="hot"
               >Hot</a
             >
           </td>
@@ -108,7 +108,7 @@
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=off"
+              data-status-action="off"
               >Off</a
             >
           </td>
@@ -126,7 +126,7 @@
           <td>
             <a
               href="#"
-              data-api='["google-home-speaker-wrapper","-h","192.168.1.22","-v",60,"-s","%E3%83%81%E3%82%A8%E3%83%9F%E3%81%95%E3%82%93%E3%80%81%E3%83%9E%E3%83%9E%E3%81%95%E3%82%93%E3%80%81%E3%83%91%E3%83%91%E3%81%8C%E5%88%B0%E7%9D%80%E3%81%97%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82%E6%BA%96%E5%82%99%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"]'
+              data-message-key="car-arrival"
               >CarArrives</a
             >
           </td>
@@ -139,39 +139,33 @@
         </tr>
         <tr>
           <td id="NW">Nest WiFi</td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.22","volumeup"]'>+</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.22","volumedown"]'>-</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.22","stop"]'>Off</a></td>
+          <td><a href="#" data-api='["catt","-d","host:nest","volumeup"]'>+</a></td>
+          <td><a href="#" data-api='["catt","-d","host:nest","volumedown"]'>-</a></td>
+          <td><a href="#" data-api='["catt","-d","host:nest","stop"]'>Off</a></td>
         </tr>
         <tr>
           <td id="TW">Tatami WiFi</td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.236","volumeup"]'>+</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.236","volumedown"]'>-</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.236","stop"]'>Off</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tatami","volumeup"]'>+</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tatami","volumedown"]'>-</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tatami","stop"]'>Off</a></td>
         </tr>
         <tr>
           <td id="CC">TV</td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.219","volumeup"]'>+</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.219","volumedown"]'>-</a></td>
-          <td><a href="#" data-api='["catt","-d","192.168.1.219","stop"]'>Off</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tv","volumeup"]'>+</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tv","volumedown"]'>-</a></td>
+          <td><a href="#" data-api='["catt","-d","host:tv","stop"]'>Off</a></td>
         </tr>
         <tr>
-          <td id="YouTube"><a href="#" data-youtube-host="192.168.1.219">YouTube</a></td>
+          <td id="YouTube"><a href="#" data-youtube-key="tv">YouTube</a></td>
           <td><textarea id="youtube_url"></textarea></td>
-          <td><a href="#" data-youtube-host="192.168.1.22">Nest Wifi</a></td>
-          <td><a href="#" data-youtube-host="192.168.1.236">Tatami WiFi</a></td>
+          <td><a href="#" data-youtube-key="nest">Nest Wifi</a></td>
+          <td><a href="#" data-youtube-key="tatami">Tatami WiFi</a></td>
         </tr>
         <tr>
           <td id="Voice">Voice</td>
           <td><textarea id="voicetext"></textarea></td>
           <td><a id="speak" href="#">Nest Wifi</a></td>
           <td><a id="speak_tatami" href="#">Tatami</a></td>
-        </tr>
-        <tr>
-          <td id="YouTube">GPT</td>
-          <td><textarea id="prompt"></textarea></td>
-          <td><a href="#" data-gpt-host="192.168.1.22">Nest Wifi</a></td>
-          <td><a href="#" data-gpt-host="192.168.1.236">Tatami WiFi</a></td>
         </tr>
         <tr>
           <td id="Alarm">Alarm</td>
@@ -270,16 +264,10 @@
           <td><a id="set" href="#">Set</a></td>
         </tr>
         <tr>
-          <td><a href="http://g.ze.gs/nasne_home/index_pc.html" target="_blank">nasne</a></td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        </tr>
-        <tr>
           <td id="AirCondition">AirCondition</td>
-          <td id="Datetime">&nbsp;</td>
+          <td id="Date">&nbsp;</td>
           <td id="Temperature">&nbsp;</td>
-          <td id="Humidity">&nbsp;</td>
+          <td id="Humid">&nbsp;</td>
         </tr>
       </tbody>
     </table>
