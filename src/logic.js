@@ -13,8 +13,6 @@ const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
-const hasMissingElements = (elements) => Object.values(elements).some((element) => !element);
-
 const buildStatusUrl = (params = {}) => {
   const url = new URL(STATUS_SCRIPT_URL);
   Object.entries(params).forEach(([key, value]) => {
@@ -129,39 +127,12 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   }
 };
 
-const setupVoiceInput = (voicetext, links) => {
-  voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, links);
-  });
-};
-
-const buildAlarmSetter = (hour, min, alarmtext, fetcher) => () => {
-  const url = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-  return fetcher(url);
-};
-
-const buildYouTubePlayer = (youtubeUrl, fetcher) => (host) => {
-  if (!youtubeUrl) {
-    return null;
-  }
-  return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
-};
-
-const buildStatusFetcher = (statusCells, fetcher) => async () => {
-  if (hasMissingElements(statusCells)) {
-    return null;
-  }
-  const latest = await fetchLatestStatus(fetcher);
-  updateStatusCells(latest, statusCells);
-  return latest;
-};
-
 export const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
   const requiredElements = getRequiredElements(doc, requiredIds);
   const statusCells = getRequiredElements(doc, ["Date", "Temperature", "Humid"]);
 
-  if (hasMissingElements(requiredElements)) {
+  if (Object.values(requiredElements).some((element) => !element)) {
     return null;
   }
 
@@ -170,11 +141,23 @@ export const initApp = (doc, fetcher = fetch) => {
 
   setAlarmDefaults(hour, min);
 
-  setupVoiceInput(voicetext, { speak, speakTatami });
+  voicetext.addEventListener("input", () => {
+    updateVoiceLinks(voicetext.value, { speak, speakTatami });
+  });
 
-  const setAlarm = buildAlarmSetter(hour, min, alarmtext, fetcher);
-  const youtubePlay = buildYouTubePlayer(youtubeUrl, fetcher);
-  const fetchLatest = buildStatusFetcher(statusCells, fetcher);
+  const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
+
+  const youtubePlay = (host) =>
+    youtubeUrl ? fetcher(buildYouTubePlayUrl(host, youtubeUrl.value)) : null;
+
+  const fetchLatest = async () => {
+    if (Object.values(statusCells).some((element) => !element)) {
+      return null;
+    }
+    const latest = await fetchLatestStatus(fetcher);
+    updateStatusCells(latest, statusCells);
+    return latest;
+  };
 
   return {
     setAlarm,
