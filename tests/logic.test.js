@@ -125,8 +125,8 @@ describe("payload parsing", () => {
     updateStatusCells({ Date: "2025-12-31T10:08:47.000Z", Temperature: "20", Humid: "50" }, elements);
 
     expect(elements.Date.innerText).toMatch(/[A-Za-z]{3} \d{1,2} \d{2}:\d{2}/);
-    expect(elements.Temperature.innerText).toBe("20");
-    expect(elements.Humid.innerText).toBe("50");
+    expect(elements.Temperature.innerText).toBe("20C");
+    expect(elements.Humid.innerText).toBe("50%");
   });
 
   it("keeps date value when invalid", () => {
@@ -140,6 +140,8 @@ describe("payload parsing", () => {
     updateStatusCells({ Date: "not-a-date", Temperature: "20", Humid: "50" }, elements);
 
     expect(elements.Date.innerText).toBe("not-a-date");
+    expect(elements.Temperature.innerText).toBe("20C");
+    expect(elements.Humid.innerText).toBe("50%");
   });
 });
 

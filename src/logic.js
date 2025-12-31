@@ -118,7 +118,12 @@ const formatDateTimeLocal = (value) => {
 
 export const updateStatusCells = (latest, elements) => {
   STATUS_KEYS.forEach((key) => {
-    elements[key].innerText = key === "Date" ? formatDateTimeLocal(latest[key]) : latest[key];
+    const value = latest[key];
+    if (key === "Date") {
+      elements[key].innerText = formatDateTimeLocal(value);
+      return;
+    }
+    elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
   });
 };
 
