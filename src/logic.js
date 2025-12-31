@@ -8,6 +8,7 @@ const ALARM_SCRIPT_URL =
 const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 
 const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
@@ -79,6 +80,16 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
   return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
+
+export const buildCarArrivalArgs = () => [
+  "google-home-speaker-wrapper",
+  "-h",
+  "192.168.1.22",
+  "-v",
+  60,
+  "-s",
+  encodeURIComponent(CAR_ARRIVAL_MESSAGE),
+];
 
 const STATUS_CALLBACK = "__statusCallback";
 

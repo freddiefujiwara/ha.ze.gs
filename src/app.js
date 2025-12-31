@@ -1,4 +1,4 @@
-import { apiUrl, buildStatusUrl, initApp } from "./logic.js";
+import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "./logic.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -17,10 +17,13 @@ export const wireEvents = (doc, fetcher, instance) => {
     setAlarm();
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
+    }
+    if (link.dataset.messageKey === "car-arrival") {
+      fetcher(apiUrl(buildCarArrivalArgs()));
     }
     if (link.dataset.fetch) {
       fetcher(link.dataset.fetch);

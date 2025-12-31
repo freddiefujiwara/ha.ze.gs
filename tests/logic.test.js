@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   apiUrl,
   buildAlarmUrl,
+  buildCarArrivalArgs,
   buildStatusUrl,
   buildVoiceUrls,
   buildYouTubePlayUrl,
@@ -268,6 +269,7 @@ describe("app bootstrap", () => {
       <div id="Temperature"></div>
       <div id="Humid"></div>
       <a href="#" data-api='["hue","lights","off"]'>API</a>
+      <a href="#" data-message-key="car-arrival">CarArrives</a>
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-status-action="control">Status</a>
       <a href="#" data-youtube-host="">NoHost</a>
@@ -281,6 +283,7 @@ describe("app bootstrap", () => {
     await import("../src/app.js");
 
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-message-key]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
@@ -290,6 +293,7 @@ describe("app bootstrap", () => {
     window.youtubePlay("192.168.1.22");
 
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
     expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
