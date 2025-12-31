@@ -179,7 +179,7 @@ textarea {
           <td>
             <a
               href="#"
-              data-api='["google-home-speaker-wrapper","-h","192.168.1.22","-v",60,"-s","%E3%83%81%E3%82%A8%E3%83%9F%E3%81%95%E3%82%93%E3%80%81%E3%83%9E%E3%83%9E%E3%81%95%E3%82%93%E3%80%81%E3%83%91%E3%83%91%E3%81%8C%E5%88%B0%E7%9D%80%E3%81%97%E3%81%BE%E3%81%97%E3%81%9F%E3%80%82%E6%BA%96%E5%82%99%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"]'
+              data-message-key="car-arrival"
               >CarArrives</a
             >
           </td>
@@ -335,6 +335,7 @@ const ALARM_SCRIPT_URL =
 const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 
 const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
@@ -406,6 +407,16 @@ const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
   return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
+
+const buildCarArrivalArgs = () => [
+  "google-home-speaker-wrapper",
+  "-h",
+  "192.168.1.22",
+  "-v",
+  60,
+  "-s",
+  encodeURIComponent(CAR_ARRIVAL_MESSAGE),
+];
 
 const STATUS_CALLBACK = "__statusCallback";
 
@@ -523,10 +534,13 @@ const wireEvents = (doc, fetcher, instance) => {
     setAlarm();
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
+    }
+    if (link.dataset.messageKey === "car-arrival") {
+      fetcher(apiUrl(buildCarArrivalArgs()));
     }
     if (link.dataset.fetch) {
       fetcher(link.dataset.fetch);
