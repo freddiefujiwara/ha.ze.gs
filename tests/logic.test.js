@@ -258,6 +258,13 @@ describe("app bootstrap", () => {
     const { start } = await import("../src/app.js");
     const instance = start(document, fetcher);
 
+    const youtubeInput = document.getElementById("youtube_url");
+    youtubeInput.value = "";
+    youtubeInput.dispatchEvent(new Event("blur"));
+    youtubeInput.value = "テスト";
+    youtubeInput.dispatchEvent(new Event("blur"));
+    expect(youtubeInput.value).toBe("");
+
     document.getElementById("alarmtext").value = "wake";
     document.getElementById("set").dispatchEvent(new Event("click"));
     await flushPromises();
@@ -330,6 +337,15 @@ describe("app bootstrap", () => {
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");
+
+    const youtubeInput = document.getElementById("youtube_url");
+    youtubeInput.value = "テスト";
+    youtubeInput.dispatchEvent(new Event("blur"));
+    expect(youtubeInput.value).toBe("");
+
+    youtubeInput.value = "https://youtu.be/abc123";
+    youtubeInput.dispatchEvent(new Event("blur"));
+    expect(youtubeInput.value).toBe("https://youtu.be/abc123");
 
     vi.unstubAllGlobals();
   });

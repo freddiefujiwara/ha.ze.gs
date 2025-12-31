@@ -1,4 +1,4 @@
-import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp, replaceHostTokens, resolveHost } from "./logic.js";
+import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp, parseYouTubeId, replaceHostTokens, resolveHost } from "./logic.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -16,6 +16,15 @@ export const wireEvents = (doc, fetcher, instance) => {
     event.preventDefault();
     await setAlarm();
     elements.alarmtext.value = "";
+  });
+
+  elements.youtubeUrl.addEventListener("blur", () => {
+    if (!elements.youtubeUrl.value) {
+      return;
+    }
+    if (!parseYouTubeId(elements.youtubeUrl.value)) {
+      elements.youtubeUrl.value = "";
+    }
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
