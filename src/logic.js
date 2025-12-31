@@ -18,12 +18,7 @@ const STATUS_CALLBACK = "__statusCallback";
 const STATUS_KEYS = ["Date", "Temperature", "Humid"];
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
 
-const sanitizeText = (value) => {
-  const cleaned = value
-    .replace(/[\s\n\r]/g, "")
-    .replace(/[^\p{L}\p{N}ー、。？！「」『』（）()\-_.,]/gu, "");
-  return encodeURIComponent(cleaned);
-};
+const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 

@@ -73,11 +73,6 @@ describe("utility builders", () => {
     );
   });
 
-  it("strips unsafe characters from alarm text", () => {
-    expect(buildAlarmUrl("07", "30", "wake;rm -rf /")).toBe(
-      "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec?time=07:30:00&text=wakerm-rf",
-    );
-  });
 
   it("parses youtube id by url form", () => {
     expect(parseYouTubeId("https://youtu.be/abc123")).toBe("abc123");
