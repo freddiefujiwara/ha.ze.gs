@@ -561,8 +561,12 @@ const wireEvents = (doc, fetcher, instance) => {
 
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
-    if (host) {
-      await youtubePlay(host);
+    if (!host) {
+      return;
+    }
+    const result = await youtubePlay(host);
+    if (result === null) {
+      elements.youtubeUrl.value = "";
     }
   });
 
