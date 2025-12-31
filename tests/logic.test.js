@@ -12,14 +12,23 @@ import {
   updateVoiceLinks,
 } from "../src/logic.js";
 
+const buildOptions = (length) =>
+  Array.from({ length }, (_, index) => {
+    const value = String(index).padStart(2, "0");
+    return `<option value="${value}">${value}</option>`;
+  }).join("");
+
+const hourOptions = buildOptions(24);
+const minOptions = buildOptions(60);
+
 const buildDocument = () => {
   const document = window.document.implementation.createHTMLDocument("test");
   document.body.innerHTML = `
     <textarea id="voicetext"></textarea>
     <a id="speak" href="#">Nest Wifi</a>
     <a id="speak_tatami" href="#">Tatami</a>
-    <select id="hour"><option value="08" selected>08</option></select>
-    <select id="min"><option value="15" selected>15</option></select>
+    <select id="hour">${hourOptions}</select>
+    <select id="min">${minOptions}</select>
     <textarea id="alarmtext"></textarea>
     <a id="set" href="#">Set</a>
     <textarea id="youtube_url"></textarea>
@@ -140,6 +149,8 @@ describe("app wiring", () => {
   });
 
   it("initializes and wires inputs", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-12-31T10:20:00Z"));
     const document = buildDocument();
     const instance = initApp(document, fetcher);
 
@@ -150,6 +161,8 @@ describe("app wiring", () => {
 
     expect(document.getElementById("speak").dataset.url).toContain("-s/hello");
 
+    document.getElementById("hour").value = "08";
+    document.getElementById("min").value = "15";
     document.getElementById("alarmtext").value = "wake";
     await instance.setAlarm();
     expect(fetcher).toHaveBeenCalledWith(
@@ -163,6 +176,8 @@ describe("app wiring", () => {
     const latest = await instance.fetchLatest();
     expect(latest).toEqual({ Date: "now" });
     expect(document.getElementById("Date").innerText).toBe("now");
+
+    vi.useRealTimers();
   });
 
   it("handles missing optional fields", () => {
@@ -184,6 +199,22 @@ describe("app wiring", () => {
   it("returns null when required nodes missing", () => {
     const document = window.document.implementation.createHTMLDocument("test");
     expect(initApp(document, fetcher)).toBeNull();
+  });
+
+  it("defaults alarm selectors to local time", () => {
+    vi.useFakeTimers();
+    const now = new Date("2025-12-31T10:20:00Z");
+    vi.setSystemTime(now);
+    const document = buildDocument();
+
+    initApp(document, fetcher);
+
+    const expectedHour = String(now.getHours()).padStart(2, "0");
+    const expectedMinute = String(now.getMinutes()).padStart(2, "0");
+    expect(document.getElementById("hour").value).toBe(expectedHour);
+    expect(document.getElementById("min").value).toBe(expectedMinute);
+
+    vi.useRealTimers();
   });
 });
 
@@ -223,8 +254,8 @@ describe("app bootstrap", () => {
       <textarea id="voicetext"></textarea>
       <a id="speak" href="#">Nest Wifi</a>
       <a id="speak_tatami" href="#">Tatami</a>
-      <select id="hour"><option value="08" selected>08</option></select>
-      <select id="min"><option value="15" selected>15</option></select>
+      <select id="hour">${hourOptions}</select>
+      <select id="min">${minOptions}</select>
       <textarea id="alarmtext"></textarea>
       <a id="set" href="#">Set</a>
       <textarea id="youtube_url"></textarea>
