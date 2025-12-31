@@ -354,6 +354,8 @@ const buildStatusUrl = (params = {}) => {
   return url.toString();
 };
 
+const padTime = (value) => String(value).padStart(2, "0");
+
 const apiUrl = (args) => `${API_BASE_URL}/${args.join("/")}`;
 
 const buildVoiceUrls = (voiceText) => {
@@ -446,6 +448,18 @@ const updateStatusCells = (latest, elements) => {
   elements.Humid.innerText = latest.Humid;
 };
 
+const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
+  const hourValue = padTime(now.getHours());
+  const minuteValue = padTime(now.getMinutes());
+
+  if (hourSelect.querySelector(`option[value="${hourValue}"]`)) {
+    hourSelect.value = hourValue;
+  }
+  if (minuteSelect.querySelector(`option[value="${minuteValue}"]`)) {
+    minuteSelect.value = minuteValue;
+  }
+};
+
 const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
   const requiredElements = getRequiredElements(doc, requiredIds);
@@ -458,6 +472,7 @@ const initApp = (doc, fetcher = fetch) => {
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
+  setAlarmDefaults(hour, min);
   voicetext.addEventListener("input", () => {
     updateVoiceLinks(voicetext.value, { speak, speakTatami });
   });
