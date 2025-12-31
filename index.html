@@ -139,13 +139,13 @@ textarea {
         </tr>
         <tr>
           <td id="AC">
-            <a href="#" data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=control">A/C</a>
+            <a href="#" data-status-action="control">A/C</a>
           </td>
           <td>
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,2,1,on"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=cool"
+              data-status-action="cool"
               >Cool</a
             >
           </td>
@@ -153,7 +153,7 @@ textarea {
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,5,1,on"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=hot"
+              data-status-action="hot"
               >Hot</a
             >
           </td>
@@ -161,7 +161,7 @@ textarea {
             <a
               href="#"
               data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"]'
-              data-fetch="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=off"
+              data-status-action="off"
               >Off</a
             >
           </td>
@@ -521,13 +521,16 @@ const wireEvents = (doc, fetcher, instance) => {
     setAlarm();
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch]", (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action]", (link) => {
     const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
     if (apiArgs) {
       fetcher(apiUrl(apiArgs));
     }
     if (link.dataset.fetch) {
       fetcher(link.dataset.fetch);
+    }
+    if (link.dataset.statusAction) {
+      fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
     }
   });
 
