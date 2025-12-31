@@ -19,18 +19,14 @@ export const wireEvents = (doc, fetcher, instance) => {
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
-    if (!elements.youtubeUrl.value) {
-      return;
-    }
-    if (!parseYouTubeId(elements.youtubeUrl.value)) {
+    if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
       elements.youtubeUrl.value = "";
     }
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
-    const apiArgs = link.dataset.api ? JSON.parse(link.dataset.api) : null;
-    if (apiArgs) {
-      await fetcher(apiUrl(replaceHostTokens(apiArgs)));
+    if (link.dataset.api) {
+      await fetcher(apiUrl(replaceHostTokens(JSON.parse(link.dataset.api))));
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
