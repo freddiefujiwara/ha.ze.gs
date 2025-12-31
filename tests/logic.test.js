@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   apiUrl,
   buildAlarmUrl,
-  buildGptUrl,
   buildVoiceUrls,
   buildYouTubePlayUrl,
   fetchLatestStatus,
@@ -24,12 +23,10 @@ const buildDocument = () => {
     <textarea id="alarmtext"></textarea>
     <a id="set" href="#">Set</a>
     <textarea id="youtube_url"></textarea>
-    <textarea id="prompt"></textarea>
-    <div id="Datetime"></div>
+    <div id="Date"></div>
     <div id="Temperature"></div>
-    <div id="Humidity"></div>
+    <div id="Humid"></div>
     <a href="#" data-youtube-host="192.168.1.22">YT</a>
-    <a href="#" data-gpt-host="192.168.1.236">GPT</a>
   `;
   return document;
 };
@@ -81,31 +78,25 @@ describe("utility builders", () => {
       "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     );
   });
-
-  it("builds gpt url", () => {
-    expect(buildGptUrl("192.168.1.22", "hello world\n")).toBe(
-      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=helloworld&i=192.168.1.22",
-    );
-  });
 });
 
 describe("payload parsing", () => {
   it("parses latest payload", () => {
-    const payload = "a&&a([{\"Datetime\":\"now\"},{\"Temperature\":\"20\",\"Humidity\":\"50\"}]);";
-    expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humidity: "50" });
+    const payload = "a&&a([{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}]);";
+    expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humid: "50" });
   });
 
   it("returns null for non-array payloads", () => {
-    const payload = "a&&a({\"Datetime\":\"now\"});";
+    const payload = "a&&a({\"Date\":\"now\"});";
     expect(parseLatestPayload(payload)).toBeNull();
   });
 
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);"),
+      text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);"),
     });
 
-    await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Datetime: "now" });
+    await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });
     expect(fetcher).toHaveBeenCalledOnce();
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?callback=a",
@@ -115,16 +106,29 @@ describe("payload parsing", () => {
   it("updates status cells", () => {
     const document = window.document.implementation.createHTMLDocument("test");
     const elements = {
-      Datetime: document.createElement("div"),
+      Date: document.createElement("div"),
       Temperature: document.createElement("div"),
-      Humidity: document.createElement("div"),
+      Humid: document.createElement("div"),
     };
 
-    updateStatusCells({ Datetime: "t", Temperature: "20", Humidity: "50" }, elements);
+    updateStatusCells({ Date: "2025-12-31T10:08:47.000Z", Temperature: "20", Humid: "50" }, elements);
 
-    expect(elements.Datetime.innerText).toBe("t");
+    expect(elements.Date.innerText).toMatch(/[A-Za-z]{3} \d{1,2} \d{2}:\d{2}/);
     expect(elements.Temperature.innerText).toBe("20");
-    expect(elements.Humidity.innerText).toBe("50");
+    expect(elements.Humid.innerText).toBe("50");
+  });
+
+  it("keeps date value when invalid", () => {
+    const document = window.document.implementation.createHTMLDocument("test");
+    const elements = {
+      Date: document.createElement("div"),
+      Temperature: document.createElement("div"),
+      Humid: document.createElement("div"),
+    };
+
+    updateStatusCells({ Date: "not-a-date", Temperature: "20", Humid: "50" }, elements);
+
+    expect(elements.Date.innerText).toBe("not-a-date");
   });
 });
 
@@ -132,7 +136,7 @@ describe("app wiring", () => {
   let fetcher;
 
   beforeEach(() => {
-    fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);") });
+    fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
   });
 
   it("initializes and wires inputs", async () => {
@@ -156,30 +160,22 @@ describe("app wiring", () => {
     await instance.youtubePlay("192.168.1.22");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
 
-    document.getElementById("prompt").value = "hello world";
-    await instance.gpt("192.168.1.236");
-    expect(fetcher).toHaveBeenCalledWith(
-      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=helloworld&i=192.168.1.236",
-    );
-
     const latest = await instance.fetchLatest();
-    expect(latest).toEqual({ Datetime: "now" });
-    expect(document.getElementById("Datetime").innerText).toBe("now");
+    expect(latest).toEqual({ Date: "now" });
+    expect(document.getElementById("Date").innerText).toBe("now");
   });
 
   it("handles missing optional fields", () => {
     const document = buildDocument();
     document.getElementById("youtube_url").remove();
-    document.getElementById("prompt").remove();
     const instance = initApp(document, fetcher);
 
     expect(instance.youtubePlay("192.168.1.22")).toBeNull();
-    expect(instance.gpt("192.168.1.22")).toBeNull();
   });
 
   it("skips latest fetch when status cells missing", async () => {
     const document = buildDocument();
-    document.getElementById("Datetime").remove();
+    document.getElementById("Date").remove();
     const instance = initApp(document, fetcher);
 
     await expect(instance.fetchLatest()).resolves.toBeNull();
@@ -195,7 +191,7 @@ describe("app bootstrap", () => {
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
     const document = buildDocument();
-    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);") });
+    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
 
     vi.stubGlobal("fetch", fetcher);
 
@@ -207,9 +203,6 @@ describe("app bootstrap", () => {
 
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
-
-    document.getElementById("prompt").value = "hi";
-    document.querySelector("a[data-gpt-host]").dispatchEvent(new Event("click"));
 
     document.getElementById("speak").dataset.url = "http://example.com/speak";
     document.getElementById("speak").dispatchEvent(new Event("click"));
@@ -235,16 +228,15 @@ describe("app bootstrap", () => {
       <textarea id="alarmtext"></textarea>
       <a id="set" href="#">Set</a>
       <textarea id="youtube_url"></textarea>
-      <textarea id="prompt"></textarea>
-      <div id="Datetime"></div>
+      <div id="Date"></div>
       <div id="Temperature"></div>
-      <div id="Humidity"></div>
+      <div id="Humid"></div>
       <a href="#" data-api='["hue","lights","off"]'>API</a>
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-youtube-host="">NoHost</a>
     `;
 
-    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);") });
+    const fetcher = vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue("a&&a([{\"Date\":\"now\"}]);") });
 
     vi.stubGlobal("fetch", fetcher);
     await import("../src/app.js");
@@ -256,50 +248,10 @@ describe("app bootstrap", () => {
     window.api(["hue", "lights", "on"]);
     window.setAlarm();
     window.youtubePlay("192.168.1.22");
-    window.gpt("192.168.1.236");
 
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
     expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
-
-    vi.unstubAllGlobals();
-  });
-
-  it("exposes wireEvents helper for reuse", async () => {
-    vi.resetModules();
-    const document = window.document.implementation.createHTMLDocument("test");
-    document.body.innerHTML = `
-      <textarea id="voicetext"></textarea>
-      <a id="speak" href="#">Nest Wifi</a>
-      <a id="speak_tatami" href="#">Tatami</a>
-      <select id="hour"><option value="08" selected>08</option></select>
-      <select id="min"><option value="15" selected>15</option></select>
-      <textarea id="alarmtext"></textarea>
-      <a id="set" href="#">Set</a>
-      <textarea id="youtube_url"></textarea>
-      <textarea id="prompt"></textarea>
-      <div id="Datetime"></div>
-      <div id="Temperature"></div>
-      <div id="Humidity"></div>
-      <a href="#" data-gpt-host="192.168.1.236">GPT</a>
-    `;
-
-    const stubbedFetch = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("a&&a([{\"Datetime\":\"now\"}]);"),
-    });
-    vi.stubGlobal("fetch", stubbedFetch);
-    const { wireEvents } = await import("../src/app.js");
-
-    const fetcher = vi.fn();
-    const instance = initApp(document, fetcher);
-    wireEvents(document, fetcher, instance);
-
-    document.getElementById("prompt").value = "hello";
-    document.querySelector("a[data-gpt-host]").dispatchEvent(new Event("click"));
-
-    expect(fetcher).toHaveBeenCalledWith(
-      "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9?p=hello&i=192.168.1.236",
-    );
 
     vi.unstubAllGlobals();
   });

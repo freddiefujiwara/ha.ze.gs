@@ -5,7 +5,6 @@ const VOICE_HOSTS = {
 };
 const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
-const GPT_HOOK_URL = "https://hook.us1.make.com/7zekvch82ird62gydqbu356ncnkx05z9";
 const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
@@ -79,11 +78,6 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
 
-export const buildGptUrl = (host, prompt) => {
-  const sanitized = sanitizeText(prompt);
-  return `${GPT_HOOK_URL}?p=${sanitized}&i=${host}`;
-};
-
 export const parseLatestPayload = (payload) => {
   const cleaned = payload.replace(/^a&&a\(/, "").replace(/\);$/, "");
   const parsed = JSON.parse(cleaned);
@@ -96,17 +90,34 @@ export const fetchLatestStatus = async (fetcher) => {
   return parseLatestPayload(payload);
 };
 
-export const updateStatusCells = (latest, elements) => {
-  ["Datetime", "Temperature", "Humidity"].forEach((target) => {
-    elements[target].innerText = latest[target];
+const formatDateTimeLocal = (value) => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   });
+  const parts = formatter.formatToParts(parsed);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${lookup.month} ${lookup.day} ${lookup.hour}:${lookup.minute}`;
+};
+
+export const updateStatusCells = (latest, elements) => {
+  elements.Date.innerText = formatDateTimeLocal(latest.Date);
+  elements.Temperature.innerText = latest.Temperature;
+  elements.Humid.innerText = latest.Humid;
 };
 
 export const initApp = (doc, fetcher = fetch) => {
   const requiredIds = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
   const requiredElements = getRequiredElements(doc, requiredIds);
 
-  const statusCells = getRequiredElements(doc, ["Datetime", "Temperature", "Humidity"]);
+  const statusCells = getRequiredElements(doc, ["Date", "Temperature", "Humid"]);
 
   if (Object.values(requiredElements).some((element) => !element)) {
     return null;
@@ -114,8 +125,6 @@ export const initApp = (doc, fetcher = fetch) => {
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
-  const prompt = doc.getElementById("prompt");
-
   voicetext.addEventListener("input", () => {
     updateVoiceLinks(voicetext.value, { speak, speakTatami });
   });
@@ -132,13 +141,6 @@ export const initApp = (doc, fetcher = fetch) => {
     return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
   };
 
-  const gpt = (host) => {
-    if (!prompt) {
-      return null;
-    }
-    return fetcher(buildGptUrl(host, prompt.value));
-  };
-
   const fetchLatest = async () => {
     if (Object.values(statusCells).some((element) => !element)) {
       return null;
@@ -151,7 +153,6 @@ export const initApp = (doc, fetcher = fetch) => {
   return {
     setAlarm,
     youtubePlay,
-    gpt,
     fetchLatest,
     elements: {
       voicetext,
@@ -162,7 +163,6 @@ export const initApp = (doc, fetcher = fetch) => {
       alarmtext,
       setButton,
       youtubeUrl,
-      prompt,
       statusCells,
     },
   };

@@ -10,7 +10,7 @@ export const bindLinkClicks = (doc, selector, handler) => {
 };
 
 export const wireEvents = (doc, fetcher, instance) => {
-  const { setAlarm, youtubePlay, gpt, elements } = instance;
+  const { setAlarm, youtubePlay, elements } = instance;
 
   elements.setButton.addEventListener("click", (event) => {
     event.preventDefault();
@@ -31,13 +31,6 @@ export const wireEvents = (doc, fetcher, instance) => {
     const host = link.dataset.youtubeHost;
     if (host) {
       youtubePlay(host);
-    }
-  });
-
-  bindLinkClicks(doc, "a[data-gpt-host]", (link) => {
-    const host = link.dataset.gptHost;
-    if (host) {
-      gpt(host);
     }
   });
 
@@ -74,5 +67,4 @@ if (typeof window !== "undefined") {
 
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
-  window.gpt = (host) => instance?.gpt(host);
 }
