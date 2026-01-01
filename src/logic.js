@@ -1,1 +1,195 @@
-const API_BASE_URL="http://a.ze.gs";export const DEVICE_HOSTS={nest:"192.168.1.22",tatami:"192.168.1.236",tv:"192.168.1.219"};const VOICE_HOSTS={speak:DEVICE_HOSTS.nest,speakTatami:DEVICE_HOSTS.tatami};const ALARM_SCRIPT_URL="https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";const STATUS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";const YOUTUBE_HOSTS=new Set(["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com"]);const CAR_ARRIVAL_MESSAGE="チエミさん、ママさん、パパが到着しました。準備をお願いします。";const STATUS_CALLBACK="__statusCallback";const STATUS_KEYS=["Date","Temperature","Humid"];const REQUIRED_IDS=["voicetext","speak","speak_tatami","hour","min","alarmtext","set"];const sanitizeText=(v)=>encodeURIComponent(v.replace(/[\s\n\r]/g,""));const getRequiredElements=(d,ids)=>Object.fromEntries(ids.map((id)=>[id,d.getElementById(id)]));export const buildStatusUrl=(p={})=>`${STATUS_SCRIPT_URL}?${new URLSearchParams(p)}`;const padTime=(v)=>String(v).padStart(2,"0");export const apiUrl=(a)=>`${API_BASE_URL}/${a.join("/")}`;export const buildVoiceUrls=(t)=>{const s=sanitizeText(t);return{speak:`${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${s}`,speakTatami:`${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${s}`};};export const updateVoiceLinks=(t,e)=>{const{ speak, speakTatami }=buildVoiceUrls(t);e.speak.dataset.url=speak;e.speakTatami.dataset.url=speakTatami;e.speak.setAttribute("href","#");e.speakTatami.setAttribute("href","#");};export const buildAlarmUrl=(h,m,t)=>{const s=sanitizeText(t);return`${ALARM_SCRIPT_URL}?time=${h}:${m}:00&text=${s}`;};export const parseYouTubeId=(u)=>{try{const p=new URL(u);if(p.hostname==="youtu.be"){return p.pathname.split("/")[1]||"";}if(!YOUTUBE_HOSTS.has(p.hostname)){return"";}const h=[{match:()=>p.pathname==="/watch",getId:()=>p.searchParams.get("v")||""},{match:()=>p.pathname.startsWith("/live/")||p.pathname.startsWith("/shorts/"),getId:()=>p.pathname.split("/")[2]||""}];const f=h.find(({match})=>match());return f?f.getId():"";}catch(error){return"";}};export const buildYouTubePlayUrl=(h,u)=>{const v=parseYouTubeId(u);return`${API_BASE_URL}/youtube-play/-h/${h}/-v/40/-i/${v}`;};export const buildCarArrivalArgs=()=>["google-home-speaker-wrapper","-h",DEVICE_HOSTS.nest,"-v",60,"-s",sanitizeText(CAR_ARRIVAL_MESSAGE)];export const resolveHost=(v)=>DEVICE_HOSTS[v]??v;export const replaceHostTokens=(a)=>a.map((arg)=>typeof arg==="string"&&arg.startsWith("host:")?resolveHost(arg.slice(5)):arg);export const parseLatestPayload=(p)=>{const c=p.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`),"").replace(/\);$/,"");const r=JSON.parse(c);return Array.isArray(r)?r.pop():null;};export const fetchLatestStatus=async(f)=>{const r=await f(buildStatusUrl({callback:STATUS_CALLBACK}));const p=await r.text();return parseLatestPayload(p);};const formatDateTimeLocal=(v)=>{const p=new Date(v);if(Number.isNaN(p.getTime())){return v;}return new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(p).replace(",","");};export const updateStatusCells=(l,e)=>{STATUS_KEYS.forEach((k)=>{const v=l[k];if(k==="Date"){e[k].innerText=formatDateTimeLocal(v);return;}e[k].innerText=k==="Temperature"?`${v}C`:`${v}%`;});};const setAlarmDefaults=(hs,ms,n=new Date())=>{const s=(sel,v)=>{if(sel.querySelector(`option[value="${v}"]`)){sel.value=v;}};s(hs,padTime(n.getHours()));s(ms,padTime(n.getMinutes()));};export const initApp=(d,f=fetch)=>{const r=getRequiredElements(d,REQUIRED_IDS);const sc=getRequiredElements(d,STATUS_KEYS);if(Object.values(r).some((e)=>!e)){return null;}const{ voicetext, speak, speak_tatami:speakTatami, hour, min, alarmtext, set:setButton }=r;const youtubeUrl=d.getElementById("youtube_url");setAlarmDefaults(hour,min);voicetext.addEventListener("input",()=>{updateVoiceLinks(voicetext.value,{speak,speakTatami});});const setAlarm=()=>f(buildAlarmUrl(hour.value,min.value,alarmtext.value));const youtubePlay=(h)=>{if(!youtubeUrl){return null;}if(!parseYouTubeId(youtubeUrl.value)){youtubeUrl.value="";return null;}return f(buildYouTubePlayUrl(h,youtubeUrl.value));};const fetchLatest=async()=>{if(Object.values(sc).some((e)=>!e)){return null;}const latest=await fetchLatestStatus(f);updateStatusCells(latest,sc);return latest;};return{setAlarm,youtubePlay,fetchLatest,elements:{voicetext,speak,speakTatami,hour,min,alarmtext,setButton,youtubeUrl,statusCells:sc}};};
+const API_BASE_URL = "http://a.ze.gs";
+export const DEVICE_HOSTS = {
+  nest: "192.168.1.22",
+  tatami: "192.168.1.236",
+  tv: "192.168.1.219",
+};
+const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
+const ALARM_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
+const STATUS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
+const STATUS_CALLBACK = "__statusCallback";
+const STATUS_KEYS = ["Date", "Temperature", "Humid"];
+const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+
+const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
+const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
+
+export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
+const padTime = (value) => String(value).padStart(2, "0");
+export const apiUrl = (args) => `${API_BASE_URL}/${args.join("/")}`;
+
+export const buildVoiceUrls = (voiceText) => {
+  const sanitized = sanitizeText(voiceText);
+  return {
+    speak: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
+    speakTatami: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
+  };
+};
+
+export const updateVoiceLinks = (voiceText, elements) => {
+  const { speak, speakTatami } = buildVoiceUrls(voiceText);
+  elements.speak.dataset.url = speak;
+  elements.speakTatami.dataset.url = speakTatami;
+  elements.speak.setAttribute("href", "#");
+  elements.speakTatami.setAttribute("href", "#");
+};
+
+export const buildAlarmUrl = (hour, minute, text) => {
+  const sanitized = sanitizeText(text);
+  return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
+};
+
+export const parseYouTubeId = (youtubeUrl) => {
+  try {
+    const parsed = new URL(youtubeUrl);
+    if (parsed.hostname === "youtu.be") {
+      return parsed.pathname.split("/")[1] || "";
+    }
+    if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
+      return "";
+    }
+    const handlers = [
+      {
+        match: () => parsed.pathname === "/watch",
+        getId: () => parsed.searchParams.get("v") || "",
+      },
+      {
+        match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
+        getId: () => parsed.pathname.split("/")[2] || "",
+      },
+    ];
+    const handler = handlers.find(({ match }) => match());
+    return handler ? handler.getId() : "";
+  } catch {
+    return "";
+  }
+};
+
+export const buildYouTubePlayUrl = (host, youtubeUrl) => {
+  const videoId = parseYouTubeId(youtubeUrl);
+  return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+};
+
+export const buildCarArrivalArgs = () => [
+  "google-home-speaker-wrapper",
+  "-h",
+  DEVICE_HOSTS.nest,
+  "-v",
+  60,
+  "-s",
+  sanitizeText(CAR_ARRIVAL_MESSAGE),
+];
+
+export const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
+export const replaceHostTokens = (args) =>
+  args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
+
+export const parseLatestPayload = (payload) => {
+  const cleaned = payload
+    .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
+    .replace(/\);$/, "");
+  const parsed = JSON.parse(cleaned);
+  return Array.isArray(parsed) ? parsed.pop() : null;
+};
+
+export const fetchLatestStatus = async (fetcher) => {
+  const response = await fetcher(buildStatusUrl({ callback: STATUS_CALLBACK }));
+  const payload = await response.text();
+  return parseLatestPayload(payload);
+};
+
+const formatDateTimeLocal = (value) => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+    .format(parsed)
+    .replace(",", "");
+};
+
+export const updateStatusCells = (latest, elements) => {
+  STATUS_KEYS.forEach((key) => {
+    const value = latest[key];
+    if (key === "Date") {
+      elements[key].innerText = formatDateTimeLocal(value);
+      return;
+    }
+    elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
+  });
+};
+
+const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
+  const setIfExists = (select, value) => {
+    if (select.querySelector(`option[value="${value}"]`)) {
+      select.value = value;
+    }
+  };
+  setIfExists(hourSelect, padTime(now.getHours()));
+  setIfExists(minuteSelect, padTime(now.getMinutes()));
+};
+
+export const initApp = (doc, fetcher = fetch) => {
+  const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
+  const statusCells = getRequiredElements(doc, STATUS_KEYS);
+  if (Object.values(requiredElements).some((element) => !element)) {
+    return null;
+  }
+
+  const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
+  const youtubeUrl = doc.getElementById("youtube_url");
+
+  setAlarmDefaults(hour, min);
+
+  voicetext.addEventListener("input", () => {
+    updateVoiceLinks(voicetext.value, { speak, speakTatami });
+  });
+
+  const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
+  const youtubePlay = (host) => {
+    if (!youtubeUrl) {
+      return null;
+    }
+    if (!parseYouTubeId(youtubeUrl.value)) {
+      youtubeUrl.value = "";
+      return null;
+    }
+    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
+  };
+
+  const fetchLatest = async () => {
+    if (Object.values(statusCells).some((element) => !element)) {
+      return null;
+    }
+    const latest = await fetchLatestStatus(fetcher);
+    updateStatusCells(latest, statusCells);
+    return latest;
+  };
+
+  return {
+    setAlarm,
+    youtubePlay,
+    fetchLatest,
+    elements: {
+      voicetext,
+      speak,
+      speakTatami,
+      hour,
+      min,
+      alarmtext,
+      setButton,
+      youtubeUrl,
+      statusCells,
+    },
+  };
+};
