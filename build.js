@@ -8,8 +8,7 @@ const srcDir = join(rootDir, "src");
 const distDir = join(rootDir, "dist");
 
 const stripExports = (code) => code.replace(/\bexport\s+(const|function|class)\s+/g, "$1 ");
-const stripAppImport = (code) =>
-  code.replace(/\s*import\s+\{[^}]*\}\s+from\s+"\.\/logic\.js";\s*/g, "");
+const stripImports = (code) => code.replace(/\s*import\s+[^;]+;\s*/g, "");
 
 const inlineAssets = (html, { css, script }) => {
   let output = html.replace(
@@ -33,8 +32,8 @@ const build = async () => {
     readFile(join(srcDir, "app.js"), "utf8"),
   ]);
 
-  const logicScript = stripExports(logic).trim();
-  const appScript = stripExports(stripAppImport(app)).trim();
+  const logicScript = stripExports(stripImports(logic)).trim();
+  const appScript = stripExports(stripImports(app)).trim();
   const bundle = `${logicScript}\n\n${appScript}`;
   const noJsHtml = applyHtmlTransforms(html, [rewriteLinksForNoJs]);
   const inlined = inlineAssets(noJsHtml, { css: css.trim(), script: bundle });
