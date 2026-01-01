@@ -6,7 +6,6 @@ This is a small web page to control home devices and show simple status values.
 - Shows a control table for lights, air conditioner, speakers, and tools.
 - Lets you send voice text to speakers.
 - Plays YouTube on a selected device.
-- Sends a short prompt to a webhook.
 - Sets an alarm time with a message.
 - Shows the latest date/time, temperature, and humidity.
 
