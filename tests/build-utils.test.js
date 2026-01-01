@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rewriteLinksForNoJs } from "../src/build-utils.js";
+import { applyHtmlTransforms, rewriteLinksForNoJs } from "../src/build-utils.js";
 
 describe("rewriteLinksForNoJs", () => {
   it("rewrites data-api links to a.ze.gs hrefs", () => {
@@ -31,5 +31,15 @@ describe("rewriteLinksForNoJs", () => {
     const html = `<a href="#" data-api='["hue",]'>Broken</a>`;
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain('href="#"');
+  });
+});
+
+describe("applyHtmlTransforms", () => {
+  it("applies transforms in order", () => {
+    const html = "<p>hello</p>";
+    const upper = (value) => value.toUpperCase();
+    const addBang = (value) => `${value}!`;
+    const result = applyHtmlTransforms(html, [upper, addBang]);
+    expect(result).toBe("<P>HELLO</P>!");
   });
 });

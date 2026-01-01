@@ -5,7 +5,7 @@ const parseDataAttribute = (attrs, name) => {
   return match ? match[2] : null;
 };
 
-export const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =>
+const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =>
   html.replace(/<a([^>]*?)>/gi, (tag, attrs) => {
     const hrefMatch = attrs.match(/\shref=("|')(.*?)\1/i);
     if (!hrefMatch) {
@@ -39,3 +39,8 @@ export const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } 
 
     return tag.replace(hrefMatch[0], ` href="${href}"`);
   });
+
+export const applyHtmlTransforms = (html, transforms = [rewriteLinksForNoJs]) =>
+  transforms.reduce((current, transform) => transform(current), html);
+
+export { rewriteLinksForNoJs };
