@@ -60,7 +60,7 @@ const rewriteLinksForNoJs = (html) =>
       href = dataFetch;
     }
 
-    if (!href) {
+    if (!href || !href.startsWith("http://a.ze.gs/")) {
       return tag;
     }
 
