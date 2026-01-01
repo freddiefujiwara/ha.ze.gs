@@ -325,13 +325,7 @@ textarea {
       </tbody>
     </table>
 
-    <script>import { buildAlarmUrl } from "./alarm.js";
-import { apiUrl, DEVICE_HOSTS, replaceHostTokens, resolveHost } from "./hosts.js";
-import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
-import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
-import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
-
-const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+    <script>const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
