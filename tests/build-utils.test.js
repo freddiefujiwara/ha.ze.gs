@@ -32,6 +32,12 @@ describe("rewriteLinksForNoJs", () => {
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain('href="#"');
   });
+
+  it("keeps links without hrefs unchanged", () => {
+    const html = `<a>No Href</a>`;
+    const result = rewriteLinksForNoJs(html);
+    expect(result).toBe(html);
+  });
 });
 
 describe("applyHtmlTransforms", () => {
