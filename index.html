@@ -604,6 +604,7 @@ const start = (doc = document, fetcher = fetch) => {
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
   wireEvents(doc, fetcher, instance);
   fetchLatest();
+  setInterval(fetchLatest, 10 * 60 * 1000);
 
   return instance;
 };
