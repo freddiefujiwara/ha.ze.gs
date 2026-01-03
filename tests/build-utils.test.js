@@ -5,7 +5,7 @@ describe("rewriteLinksForNoJs", () => {
   it("rewrites data-api links to a.ze.gs hrefs", () => {
     const html = `<a href="#" data-api='["hue","lights","off"]'>Off</a>`;
     const result = rewriteLinksForNoJs(html);
-    expect(result).toContain('href="http://a.ze.gs/hue/lights/off"');
+    expect(result).toContain('href="http://a.ze.gs/hue/lights/off?url=http://ha.ze.gs"');
   });
 
   it("keeps status-action links unchanged because they are not a.ze.gs", () => {
@@ -18,6 +18,7 @@ describe("rewriteLinksForNoJs", () => {
     const html = `<a href="#" data-message-key="car-arrival">Car</a>`;
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain("http://a.ze.gs/google-home-speaker-wrapper/");
+    expect(result).toContain("?url=http://ha.ze.gs");
   });
 
   it("keeps non-a.ze.gs links unchanged", () => {
@@ -25,6 +26,18 @@ describe("rewriteLinksForNoJs", () => {
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain('href="#"');
     expect(result).toContain('data-fetch="http://example.com/test"');
+  });
+
+  it("appends the source url to a.ze.gs data-fetch links", () => {
+    const html = `<a href="#" data-fetch="http://a.ze.gs/path?mode=on">Fetch</a>`;
+    const result = rewriteLinksForNoJs(html);
+    expect(result).toContain('href="http://a.ze.gs/path?mode=on&url=http://ha.ze.gs"');
+  });
+
+  it("avoids adding duplicate source url parameters", () => {
+    const html = `<a href="#" data-fetch="http://a.ze.gs/path?url=http://ha.ze.gs">Fetch</a>`;
+    const result = rewriteLinksForNoJs(html);
+    expect(result).toContain('href="http://a.ze.gs/path?url=http://ha.ze.gs"');
   });
 
   it("keeps invalid data-api payloads unchanged", () => {

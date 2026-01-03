@@ -5,6 +5,15 @@ const parseDataAttribute = (attrs, name) => {
   return match ? match[2] : null;
 };
 
+const appendSourceUrl = (href, sourceUrl = "http://ha.ze.gs") => {
+  if (href.includes("url=")) {
+    return href;
+  }
+
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}url=${sourceUrl}`;
+};
+
 const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =>
   html.replace(/<a([^>]*?)>/gi, (tag, attrs) => {
     const hrefMatch = attrs.match(/\shref=("|')(.*?)\1/i);
@@ -37,7 +46,8 @@ const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =
       return tag;
     }
 
-    return tag.replace(hrefMatch[0], ` href="${href}"`);
+    const hrefWithSource = appendSourceUrl(href);
+    return tag.replace(hrefMatch[0], ` href="${hrefWithSource}"`);
   });
 
 export const applyHtmlTransforms = (html, transforms = [rewriteLinksForNoJs]) =>
