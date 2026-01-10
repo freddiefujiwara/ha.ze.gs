@@ -21,6 +21,7 @@ const buildDocument = () => {
     <textarea id="alarmtext"></textarea>
     <a id="set" href="#">Set</a>
     <textarea id="youtube_url"></textarea>
+    <div id="AirCondition"></div>
     <div id="Date"></div>
     <div id="Temperature"></div>
     <div id="Humid"></div>
@@ -34,7 +35,9 @@ describe("app wiring", () => {
 
   beforeEach(() => {
     fetcher = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+      text: vi
+        .fn()
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"cool\"]]});"),
     });
   });
 
@@ -70,7 +73,8 @@ describe("app wiring", () => {
     expect(fetcher.mock.calls).toHaveLength(callsBeforeInvalid);
 
     const latest = await instance.fetchLatest();
-    expect(latest).toEqual({ Date: "now" });
+    expect(latest).toEqual({ Date: "now", AirCondition: "cool" });
+    expect(document.getElementById("AirCondition").innerText).toBe("cool");
     expect(document.getElementById("Date").innerText).toBe("now");
 
     vi.useRealTimers();
@@ -123,7 +127,9 @@ describe("app bootstrap", () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({
-        text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+        text: vi
+          .fn()
+          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"auto\"]]});"),
       });
 
     vi.stubGlobal("fetch", fetcher);
@@ -174,6 +180,7 @@ describe("app bootstrap", () => {
       <textarea id="alarmtext"></textarea>
       <a id="set" href="#">Set</a>
       <textarea id="youtube_url"></textarea>
+      <div id="AirCondition"></div>
       <div id="Date"></div>
       <div id="Temperature"></div>
       <div id="Humid"></div>
@@ -188,7 +195,9 @@ describe("app bootstrap", () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({
-        text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+        text: vi
+          .fn()
+          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"dry\"]]});"),
       });
 
     vi.stubGlobal("fetch", fetcher);
