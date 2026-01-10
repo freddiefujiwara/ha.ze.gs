@@ -363,7 +363,7 @@ const parseLatestPayload = (payload) => {
   const { conditions, status } = JSON.parse(cleaned);
   const latest = conditions?.pop?.();
   if (!latest) return null;
-  const airCondition = status?.pop?.()?.pop?.();
+  const airCondition = status;
   return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
 };
 
@@ -393,7 +393,7 @@ const updateStatusCells = (latest, elements) => {
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
-      elements[key].innerText = value ?? "AirCondition";
+      elements[key].innerText = value == null ? "AirCondition" : String(value);
       return;
     }
     if (key === "Date") {
