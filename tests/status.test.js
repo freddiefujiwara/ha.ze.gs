@@ -85,7 +85,7 @@ describe("status", () => {
 
     updateStatusCells({ Date: "now", Temperature: "20", Humid: "50" }, elements);
 
-    expect(elements.AirCondition.innerText).toBe("");
+    expect(elements.AirCondition.innerText).toBe("AirCondition");
   });
 
   it("builds status url", () => {

@@ -42,7 +42,7 @@ export const updateStatusCells = (latest, elements) => {
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
-      elements[key].innerText = value ?? "";
+      elements[key].innerText = value ?? "AirCondition";
       return;
     }
     if (key === "Date") {
