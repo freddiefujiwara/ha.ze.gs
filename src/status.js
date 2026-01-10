@@ -10,7 +10,7 @@ export const parseLatestPayload = (payload) => {
     .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
     .replace(/\);$/, "");
   const parsed = JSON.parse(cleaned);
-  return Array.isArray(parsed) ? parsed.pop() : null;
+  return Array.isArray(parsed?.conditions) ? parsed.conditions.pop() : null;
 };
 
 export const fetchLatestStatus = async (fetcher) => {

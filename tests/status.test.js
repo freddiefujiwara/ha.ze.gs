@@ -3,18 +3,26 @@ import { buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCell
 
 describe("status", () => {
   it("parses latest payload", () => {
-    const payload = "__statusCallback&&__statusCallback([{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}]);";
+    const payload =
+      "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}]});";
     expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humid: "50" });
   });
 
   it("returns null for non-array payloads", () => {
+    const payload = "__statusCallback&&__statusCallback({\"conditions\":{\"Date\":\"now\"}});";
+    expect(parseLatestPayload(payload)).toBeNull();
+  });
+
+  it("returns null for missing conditions", () => {
     const payload = "__statusCallback&&__statusCallback({\"Date\":\"now\"});";
     expect(parseLatestPayload(payload)).toBeNull();
   });
 
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);"),
+      text: vi
+        .fn()
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
     });
 
     await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });

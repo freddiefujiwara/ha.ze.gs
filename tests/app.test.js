@@ -34,7 +34,7 @@ describe("app wiring", () => {
 
   beforeEach(() => {
     fetcher = vi.fn().mockResolvedValue({
-      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);"),
+      text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
     });
   });
 
@@ -122,7 +122,9 @@ describe("app bootstrap", () => {
     const document = buildDocument();
     const fetcher = vi
       .fn()
-      .mockResolvedValue({ text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);") });
+      .mockResolvedValue({
+        text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+      });
 
     vi.stubGlobal("fetch", fetcher);
 
@@ -185,7 +187,9 @@ describe("app bootstrap", () => {
 
     const fetcher = vi
       .fn()
-      .mockResolvedValue({ text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback([{\"Date\":\"now\"}]);") });
+      .mockResolvedValue({
+        text: vi.fn().mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+      });
 
     vi.stubGlobal("fetch", fetcher);
     await import("../src/app.js");
