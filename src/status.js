@@ -9,16 +9,11 @@ export const parseLatestPayload = (payload) => {
   const cleaned = payload
     .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
     .replace(/\);$/, "");
-  const parsed = JSON.parse(cleaned);
-  const latest = Array.isArray(parsed?.conditions) ? parsed.conditions.pop() : null;
-  if (!latest) {
-    return null;
-  }
-  const statusEntry = Array.isArray(parsed?.status) ? parsed.status.pop() : null;
-  if (Array.isArray(statusEntry)) {
-    latest.AirCondition = statusEntry.pop();
-  }
-  return latest;
+  const { conditions, status } = JSON.parse(cleaned);
+  const latest = conditions?.pop?.();
+  if (!latest) return null;
+  const airCondition = status?.pop?.()?.pop?.();
+  return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
 };
 
 export const fetchLatestStatus = async (fetcher) => {
