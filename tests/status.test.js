@@ -4,8 +4,12 @@ import { buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCell
 describe("status", () => {
   it("parses latest payload", () => {
     const payload =
-      "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}],\"status\":[[\"x\",\"auto\"],[\"y\",\"cool\"]]});";
-    expect(parseLatestPayload(payload)).toEqual({ Temperature: "20", Humid: "50", AirCondition: "cool" });
+      "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}],\"status\":\"cool\"});";
+    expect(parseLatestPayload(payload)).toEqual({
+      Temperature: "20",
+      Humid: "50",
+      AirCondition: "cool",
+    });
   });
 
   it("returns null for non-array payloads", () => {
@@ -27,7 +31,7 @@ describe("status", () => {
     const fetcher = vi.fn().mockResolvedValue({
       text: vi
         .fn()
-        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"on\"]]});"),
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"});"),
     });
 
     await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now", AirCondition: "on" });
