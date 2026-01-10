@@ -37,7 +37,7 @@ describe("app wiring", () => {
     fetcher = vi.fn().mockResolvedValue({
       text: vi
         .fn()
-        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"cool\"]]});"),
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"cool\"});"),
     });
   });
 
@@ -129,7 +129,7 @@ describe("app bootstrap", () => {
       .mockResolvedValue({
         text: vi
           .fn()
-          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"auto\"]]});"),
+          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"auto\"});"),
       });
 
     vi.stubGlobal("fetch", fetcher);
@@ -197,7 +197,7 @@ describe("app bootstrap", () => {
       .mockResolvedValue({
         text: vi
           .fn()
-          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":[[\"dry\"]]});"),
+          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"dry\"});"),
       });
 
     vi.stubGlobal("fetch", fetcher);
