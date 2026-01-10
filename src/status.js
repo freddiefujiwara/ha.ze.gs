@@ -1,5 +1,5 @@
 const STATUS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec";
+  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
 const STATUS_CALLBACK = "__statusCallback";
 const STATUS_KEYS = ["Date", "Temperature", "Humid"];
 
