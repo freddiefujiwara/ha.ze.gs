@@ -20,7 +20,7 @@ describe("status", () => {
     await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });
     expect(fetcher).toHaveBeenCalledOnce();
     expect(fetcher.mock.calls[0][0]).toBe(
-      "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?callback=__statusCallback",
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?callback=__statusCallback",
     );
   });
 
@@ -56,7 +56,7 @@ describe("status", () => {
 
   it("builds status url", () => {
     expect(buildStatusUrl({ s: "status", t: "control" })).toBe(
-      "https://script.google.com/macros/s/AKfycbyedXl6ic-uZR0LDrWgpw9madWl0374RNxz7EIB1m4wMnYsVZnT3rfVt4OQ8tDb1R8YOQ/exec?s=status&t=control",
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?s=status&t=control",
     );
   });
 });
