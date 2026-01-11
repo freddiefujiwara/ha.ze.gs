@@ -255,7 +255,7 @@ const isTextTooLong = (value, maxText) =>
 const DATA_API_DELAY_MS = 200;
 const STATUS_INTERVAL_MS = 10 * 60 * 1000;
 const STATUS_BACKOFF_MS = 60 * 1000;
-const MAX_ALARM_TEXT =
+const MAX_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 
 const ALARM_SCRIPT_URL =
@@ -285,7 +285,7 @@ const replaceHostTokens = (args) =>
   args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
 
 const buildAlarmUrl = (hour, minute, text) => {
-  if (isTextTooLong(text, MAX_ALARM_TEXT)) {
+  if (isTextTooLong(text, MAX_TEXT)) {
     console.error(`Too long text : ${text}`);
     return null;
   }
@@ -381,7 +381,7 @@ const buildVoiceUrls = (voiceText) => {
 };
 
 const updateVoiceLinks = (voiceText, elements) => {
-  if (isTextTooLong(voiceText, MAX_ALARM_TEXT)) {
+  if (isTextTooLong(voiceText, MAX_TEXT)) {
     console.error(`Too long text : ${voiceText}`);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
@@ -647,7 +647,12 @@ const wireEvents = (doc, fetcher, instance) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       if (link.dataset.url) {
-        await fetcher(link.dataset.url);
+        try {
+          await fetcher(link.dataset.url);
+        } catch (error) {
+          console.error("Failed to send voice command", error);
+          return;
+        }
       }
       elements.voicetext.value = "";
     });
