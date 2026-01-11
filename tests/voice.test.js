@@ -7,7 +7,7 @@ describe("voice", () => {
   it("builds voice urls", () => {
     const urls = buildVoiceUrls("hello world\n");
     expect(urls.speak).toContain("http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.22");
-    expect(urls.speak).toContain("-s/helloworld");
+    expect(urls.speak).toContain("-s/hello%E3%80%80world");
     expect(urls.speakTatami).toContain("http://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.236");
   });
 

@@ -1,1 +1,1 @@
-export const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
+export const sanitizeText = (value) => encodeURIComponent(value.replace(/\s+/g, "　").trim());

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
-import { wireEvents } from "../src/app.js";
+import { scheduleLatestFetch, wireEvents } from "../src/app.js";
 
 const buildOptions = (length) =>
   Array.from({ length }, (_, index) => {
@@ -189,6 +189,39 @@ describe("app bootstrap", () => {
     expect(fetcher).toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it("backs off status polling on failures", async () => {
+    vi.useFakeTimers();
+    const onSchedule = vi.fn();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const stop = scheduleLatestFetch(
+      () => {
+        throw new Error("network");
+      },
+      { onSchedule },
+    );
+
+    expect(onSchedule).toHaveBeenCalledWith(11 * 60 * 1000);
+    expect(errorSpy).toHaveBeenCalledWith("Failed to fetch latest status", expect.any(Error));
+
+    stop();
+    errorSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("restarts polling after scheduled interval", async () => {
+    vi.useFakeTimers();
+    const fetchLatest = vi.fn().mockResolvedValue(null);
+    const stop = scheduleLatestFetch(fetchLatest);
+
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+
+    expect(fetchLatest).toHaveBeenCalledTimes(2);
+
+    stop();
+    vi.useRealTimers();
   });
 
   it("handles api/fetch links and window api helper", async () => {

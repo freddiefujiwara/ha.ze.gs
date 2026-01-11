@@ -76,18 +76,19 @@ export const initApp = (doc, fetcher = fetch) => {
     if (!youtubeUrl) {
       return null;
     }
-    if (!parseYouTubeId(youtubeUrl.value)) {
+    const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
+    if (!playUrl) {
       youtubeUrl.value = "";
       return null;
     }
-    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
+    return fetcher(playUrl);
   };
 
-  const fetchLatest = async () => {
+  const fetchLatest = async (signal) => {
     if (Object.values(statusCells).some((element) => !element)) {
       return null;
     }
-    const latest = await fetchLatestStatus(fetcher);
+    const latest = await fetchLatestStatus(fetcher, { signal });
     updateStatusCells(latest, statusCells);
     return latest;
   };

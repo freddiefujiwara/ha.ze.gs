@@ -3,6 +3,9 @@ import { API_BASE_URL_VALUE } from "./hosts.js";
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
 
 export const parseYouTubeId = (youtubeUrl) => {
+  if (!youtubeUrl) {
+    return "";
+  }
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.hostname === "youtu.be") {
@@ -26,11 +29,15 @@ export const parseYouTubeId = (youtubeUrl) => {
     const handler = handlers.find(({ match }) => match());
     return handler ? handler.getId() : "";
   } catch {
+    console.error(`Invalid URL: ${youtubeUrl}`);
     return "";
   }
 };
 
 export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
+  if (!videoId) {
+    return null;
+  }
   return `${API_BASE_URL_VALUE}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };

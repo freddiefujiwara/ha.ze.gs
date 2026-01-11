@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildYouTubePlayUrl, parseYouTubeId } from "../src/youtube.js";
 
 describe("youtube", () => {
@@ -12,12 +12,16 @@ describe("youtube", () => {
     expect(parseYouTubeId("https://www.youtube.com/live/")).toBe("");
     expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBe("");
     expect(parseYouTubeId("https://example.com/watch?v=abc")).toBe("");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(parseYouTubeId("invalid")).toBe("");
+    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: invalid");
+    errorSpy.mockRestore();
   });
 
   it("builds youtube play url", () => {
     expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123")).toBe(
       "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     );
+    expect(buildYouTubePlayUrl("192.168.1.22", "https://example.com/watch?v=abc")).toBeNull();
   });
 });
