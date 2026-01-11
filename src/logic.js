@@ -79,7 +79,7 @@ export const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, { speak, speakTatami, voicetext });
+    updateVoiceLinks(voicetext.value, { speak, speakTatami });
   });
 
   const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));

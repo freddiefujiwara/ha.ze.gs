@@ -15,12 +15,10 @@ describe("voice", () => {
     const document = buildDocument();
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
-    const voicetext = document.createElement("textarea");
 
-    const updated = updateVoiceLinks("test", { speak, speakTatami, voicetext });
+    const updated = updateVoiceLinks("test", { speak, speakTatami });
 
     expect(updated).toBe(true);
-    expect(voicetext.value).toBe("");
     expect(speak.dataset.url).toContain("-s/test");
     expect(speakTatami.dataset.url).toContain("-s/test");
   });
@@ -29,16 +27,12 @@ describe("voice", () => {
     const document = buildDocument();
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
-    const voicetext = document.createElement("textarea");
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const tooLong = `${MAX_VOICE_TEXT}１`;
 
-    voicetext.value = tooLong;
-
-    const updated = updateVoiceLinks(tooLong, { speak, speakTatami, voicetext });
+    const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
 
     expect(updated).toBe(false);
-    expect(voicetext.value).toBe("");
     expect(errorSpy).toHaveBeenCalledWith(`Too long text : ${tooLong}`);
     expect(speak.dataset.url).toBeUndefined();
     expect(speakTatami.dataset.url).toBeUndefined();
@@ -58,13 +52,12 @@ describe("voice", () => {
     const document = buildDocument();
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
-    const voicetext = document.createElement("textarea");
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const tooLong = `${MAX_VOICE_TEXT}１`;
 
-    updateVoiceLinks("ok", { speak, speakTatami, voicetext });
+    updateVoiceLinks("ok", { speak, speakTatami });
 
-    const updated = updateVoiceLinks(tooLong, { speak, speakTatami, voicetext });
+    const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
 
     expect(updated).toBe(false);
     expect(speak.dataset.url).toBeUndefined();
