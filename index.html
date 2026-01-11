@@ -317,9 +317,6 @@ const formatDateTimeLocal = (value) => {
 };
 
 const updateStatusCells = (latest, elements) => {
-  if (!latest) {
-    return;
-  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
@@ -354,8 +351,8 @@ const buildVoiceUrls = (voiceText) => {
 const updateVoiceLinks = (voiceText, elements) => {
   if (isVoiceTextTooLong(voiceText)) {
     console.error(`Too long text : ${voiceText}`);
-    delete elements.speak.dataset.url;
-    delete elements.speakTatami.dataset.url;
+    elements.speak.removeAttribute("data-url");
+    elements.speakTatami.removeAttribute("data-url");
     return false;
   }
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
@@ -526,9 +523,9 @@ const initApp = (doc, fetcher = fetch) => {
 
 const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
-    link.addEventListener("click", (event) => {
+    link.addEventListener("click", async (event) => {
       event.preventDefault();
-      handler(link);
+      await handler(link);
     });
   });
 };
