@@ -259,22 +259,31 @@ const MAX_ALARM_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 const MAX_VOICE_TEXT = MAX_ALARM_TEXT;
 
+const ALARM_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
+
 const API_BASE_URL = "http://a.ze.gs";
+
 const DEVICE_HOSTS = {
   nest: "192.168.1.22",
   tatami: "192.168.1.236",
   tv: "192.168.1.219",
 };
 
+const STATUS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
+const STATUS_CALLBACK = "__statusCallback";
+const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
+
+const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
+const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
+
+const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+
 const apiUrl = (args) => `${API_BASE_URL}/${args.join("/")}`;
 const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
 const replaceHostTokens = (args) =>
   args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
-
-const API_BASE_URL_VALUE = API_BASE_URL;
-
-const ALARM_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
 
 const buildAlarmUrl = (hour, minute, text) => {
   if (isTextTooLong(text, MAX_ALARM_TEXT)) {
@@ -284,11 +293,6 @@ const buildAlarmUrl = (hour, minute, text) => {
   const sanitized = sanitizeText(text);
   return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
-
-const STATUS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
-const STATUS_CALLBACK = "__statusCallback";
-const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
 
 const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
@@ -369,13 +373,11 @@ const updateStatusCells = (latest, elements) => {
 
 const STATUS_CELL_KEYS = STATUS_KEYS;
 
-const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
-const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
   return {
-    speak: `${API_BASE_URL_VALUE}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
-    speakTatami: `${API_BASE_URL_VALUE}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
+    speak: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
+    speakTatami: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
   };
 };
 
@@ -401,8 +403,6 @@ const buildCarArrivalArgs = () => [
   "-s",
   sanitizeText(CAR_ARRIVAL_MESSAGE),
 ];
-
-const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
 
 const parseYouTubeId = (youtubeUrl) => {
   if (!youtubeUrl) {
@@ -446,7 +446,7 @@ const buildYouTubePlayUrl = (host, youtubeUrl) => {
   if (!videoId) {
     return null;
   }
-  return `${API_BASE_URL_VALUE}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+  return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
