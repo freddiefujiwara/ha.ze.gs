@@ -192,6 +192,12 @@ describe("app bootstrap", () => {
     await flushPromises();
     expect(document.getElementById("voicetext").value).toBe("");
 
+    document.getElementById("voicetext").value = "too long";
+    document.getElementById("speak").removeAttribute("data-url");
+    document.getElementById("speak").dispatchEvent(new Event("click"));
+    await flushPromises();
+    expect(document.getElementById("voicetext").value).toBe("");
+
     document.getElementById("speak_tatami").dataset.url = "http://example.com/tatami";
     document.getElementById("speak_tatami").dispatchEvent(new Event("click"));
     await flushPromises();
