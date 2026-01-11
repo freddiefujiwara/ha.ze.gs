@@ -55,6 +55,11 @@ describe("status", () => {
     expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
   });
 
+  it("parses jsonp payloads", () => {
+    const payload = "__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"});";
+    expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
+  });
+
   it("handles raw json arrays", () => {
     const payload = "[{\"Date\":\"now\"}]";
     expect(parseLatestPayload(payload)).toBeNull();
@@ -68,6 +73,29 @@ describe("status", () => {
   it("returns null for invalid json", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback(invalid);";
+    expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
+  it("returns null for empty payload", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(parseLatestPayload("")).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
+  it("returns null for html payload", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const payload = "<html><body>bad gateway</body></html>";
+    expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
+  it("returns null for garbage payload", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const payload = "%%%$$$not-json%%%";
     expect(parseLatestPayload(payload)).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     errorSpy.mockRestore();
