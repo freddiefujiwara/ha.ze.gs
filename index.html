@@ -246,8 +246,8 @@ textarea {
       </tbody>
     </table>
 
-    <script>const sanitizeText = (value) =>
-  encodeURIComponent(String(value ?? "").replace(/\s+/g, "　").trim());
+    <script>const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
+const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
 
 const DATA_API_DELAY_MS = 200;
 const STATUS_INTERVAL_MS = 10 * 60 * 1000;
@@ -292,7 +292,14 @@ const parseLatestPayload = (payload) => {
     : stripped.trim();
   try {
     const { conditions, status } = JSON.parse(cleaned);
-    const latest = conditions?.pop?.();
+    if (!Array.isArray(conditions) || !conditions.length) {
+      console.error("Missing status conditions", {
+        hasConditions: Array.isArray(conditions),
+        length: Array.isArray(conditions) ? conditions.length : null,
+      });
+      return null;
+    }
+    const latest = conditions.pop();
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;
@@ -357,7 +364,8 @@ const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着し
 const MAX_VOICE_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_VOICE_TEXT).length;
-const isVoiceTextTooLong = (voiceText) => sanitizeText(voiceText).length > MAX_ENCODED_LENGTH;
+const isVoiceTextTooLong = (voiceText) =>
+  encodeURIComponent(normalizeText(voiceText)).length > MAX_ENCODED_LENGTH;
 
 const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
