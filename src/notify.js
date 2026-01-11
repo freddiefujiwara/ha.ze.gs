@@ -1,34 +1,51 @@
 import { NOTIFY_DEBOUNCE_MS, NOTIFY_DURATION_MS } from "./constants.js";
 
-let lastMessage = "";
-let debounceTimer;
+const DEFAULT_OPTIONS = {
+  containerId: "notification-container",
+  debounceMs: NOTIFY_DEBOUNCE_MS,
+  durationMs: NOTIFY_DURATION_MS,
+  showDelayMs: 10,
+  transitionMs: 300,
+};
+
+const cache = new WeakMap();
+const messageText = (message) => String(message ?? "");
+
+export const createNotifier = (doc, options = {}) => {
+  const settings = { ...DEFAULT_OPTIONS, ...options };
+  let lastMessage = "";
+  let timer;
+  const notify = (message) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      lastMessage = "";
+    }, settings.debounceMs);
+    const text = messageText(message);
+    if (text === lastMessage) return;
+    lastMessage = text;
+    const container = doc?.getElementById?.(settings.containerId);
+    if (!container || container.isConnected === false) return;
+    const toast = doc.createElement("div");
+    toast.className = "toast";
+    toast.textContent = text;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), settings.transitionMs);
+    }, settings.durationMs);
+  };
+  return { notify };
+};
 
 export const notify = (doc, message) => {
-  const hideToast = (element) => {
-    element.classList.remove("show");
-    setTimeout(() => element.remove(), 300);
-  };
+  if (!doc) return;
+  const notifier = cache.get(doc) ?? createNotifier(doc);
+  cache.set(doc, notifier);
+  notifier.notify(message);
+};
 
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    lastMessage = "";
-  }, NOTIFY_DEBOUNCE_MS);
-
-  if (lastMessage === message) {
-    return;
-  }
-  lastMessage = message;
-
-  const container = doc.getElementById("notification-container");
-  if (!container) {
-    return;
-  }
-
-  const toast = doc.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-  container.appendChild(toast);
-
-  setTimeout(() => toast.classList.add("show"), 10);
-  setTimeout(() => hideToast(toast), NOTIFY_DURATION_MS);
+export const reportError = (doc, message, details) => {
+  details === undefined ? console.error(message) : console.error(message, details);
+  notify(doc, message);
 };

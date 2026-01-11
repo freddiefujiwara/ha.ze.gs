@@ -9,15 +9,15 @@ import {
   replaceHostTokens,
   resolveHost,
 } from "./logic.js";
-import { notify } from "./notify.js";
+import { reportError } from "./notify.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
-  doc.querySelectorAll(selector).forEach((link) => {
+  doc.querySelectorAll(selector).forEach((link) =>
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       await handler(link);
-    });
-  });
+    }),
+  );
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -35,10 +35,7 @@ export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
       await fetchLatest(controller.signal);
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
-      if (error?.name !== "AbortError") {
-        console.error(ERROR_MESSAGES.FETCH_STATUS, error);
-        notify(doc, ERROR_MESSAGES.FETCH_STATUS);
-      }
+      if (error?.name !== "AbortError") reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
       schedule(nextDelay(error));
     }
   };
@@ -46,73 +43,54 @@ export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
   return () => clearTimeout(timerId);
 };
 
+const handleDataApi = async (doc, fetcher, dataApi) => {
+  try {
+    const apiCommands = parseApiCommands(dataApi);
+    for (let index = 0; index < apiCommands.length; index += 1) {
+      await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
+      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) await delay(DATA_API_DELAY_MS);
+    }
+  } catch (error) {
+    reportError(doc, ERROR_MESSAGES.EXEC_COMMANDS, error);
+  }
+};
+
 export const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, elements } = instance;
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    const didSet = await setAlarm();
-    if (didSet) {
-      elements.alarmtext.value = "";
-    }
+    if (await setAlarm()) elements.alarmtext.value = "";
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
-      console.error(ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
-      notify(doc, ERROR_MESSAGES.INVALID_URL);
+      reportError(doc, ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
       elements.youtubeUrl.value = "";
     }
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
-    if (link.dataset.api) {
-      try {
-        const apiCommands = parseApiCommands(link.dataset.api);
-        for (let index = 0; index < apiCommands.length; index += 1) {
-          await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
-          if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
-            await delay(DATA_API_DELAY_MS);
-          }
-        }
-      } catch (error) {
-        console.error(ERROR_MESSAGES.EXEC_COMMANDS, error);
-        notify(doc, ERROR_MESSAGES.EXEC_COMMANDS);
-        return;
-      }
-    }
-    if (link.dataset.messageKey === "car-arrival") {
-      await fetcher(apiUrl(buildCarArrivalArgs()));
-    }
-    if (link.dataset.statusAction) {
-      await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
-    }
+    if (link.dataset.api) await handleDataApi(doc, fetcher, link.dataset.api);
+    if (link.dataset.messageKey === "car-arrival") await fetcher(apiUrl(buildCarArrivalArgs()));
+    if (link.dataset.statusAction) await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
   });
 
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
-    if (!host) {
-      return;
-    }
-    const result = await instance.youtubePlay(host);
-    if (result) {
-      elements.youtubeUrl.value = "";
-    }
+    if (!host) return;
+    if (await instance.youtubePlay(host)) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
-      if (link.dataset.url) {
-        try {
-          const response = await fetcher(link.dataset.url);
-          if (response.ok) {
-            elements.voicetext.value = "";
-          }
-        } catch (error) {
-          console.error(ERROR_MESSAGES.SEND_VOICE, error);
-          notify(doc, ERROR_MESSAGES.SEND_VOICE);
-        }
+      if (!link.dataset.url) return;
+      try {
+        const response = await fetcher(link.dataset.url);
+        if (response.ok) elements.voicetext.value = "";
+      } catch (error) {
+        reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
       }
     });
   });
@@ -120,25 +98,18 @@ export const wireEvents = (doc, fetcher, instance) => {
 
 export const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
-  if (!instance) {
-    return null;
-  }
-
-  const { fetchLatest } = instance;
+  if (!instance) return null;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
-  scheduleLatestFetch(doc, fetchLatest);
+  scheduleLatestFetch(doc, instance.fetchLatest);
   wireEvents(doc, fetcher, instance);
-
   return instance;
 };
 
 if (typeof window !== "undefined") {
   const instance = start(document, fetch);
-
   window.api = (args) => {
     fetch(apiUrl(args));
   };
-
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
 }

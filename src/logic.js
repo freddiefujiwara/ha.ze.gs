@@ -1,13 +1,12 @@
 import { buildAlarmUrl } from "./alarm.js";
 import { DEVICE_HOSTS, ERROR_MESSAGES } from "./constants.js";
 import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
-import { notify } from "./notify.js";
+import { reportError } from "./notify.js";
 import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
 import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
 const buildTimeOptions = (count) =>
@@ -52,18 +51,12 @@ export {
   DEVICE_HOSTS,
 };
 
+const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
+
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  if (!hourSelect.options.length) {
-    hourSelect.innerHTML = buildTimeOptions(24);
-  }
-  if (!minuteSelect.options.length) {
-    minuteSelect.innerHTML = buildTimeOptions(60);
-  }
-  const setIfExists = (select, value) => {
-    if (select.querySelector(`option[value="${value}"]`)) {
-      select.value = value;
-    }
-  };
+  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
+  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
+  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
   setIfExists(hourSelect, padTime(now.getHours()));
   setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
@@ -71,9 +64,7 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
 export const initApp = (doc, fetcher = fetch) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
-  if (Object.values(requiredElements).some((element) => !element)) {
-    return null;
-  }
+  if (Object.values(requiredElements).some((element) => !element)) return null;
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
@@ -81,33 +72,21 @@ export const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
-    if (!ok) {
-      console.error(ERROR_MESSAGES.TOO_LONG, voicetext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
-    }
+    if (!updateVoiceLinks(voicetext.value, { speak, speakTatami })) reportTooLong(doc, voicetext.value);
   });
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    if (!alarmUrl) {
-      console.error(ERROR_MESSAGES.TOO_LONG, alarmtext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
-      return false;
-    }
+    if (!alarmUrl) return reportTooLong(doc, alarmtext.value), false;
     await fetcher(alarmUrl);
     return true;
   };
+
   const youtubePlay = (host) => {
-    if (!youtubeUrl) {
-      return null;
-    }
+    if (!youtubeUrl) return null;
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
-      if (youtubeUrl.value) {
-        console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-        notify(doc, ERROR_MESSAGES.INVALID_URL);
-      }
+      if (youtubeUrl.value) reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       youtubeUrl.value = "";
       return null;
     }
@@ -115,13 +94,9 @@ export const initApp = (doc, fetcher = fetch) => {
   };
 
   const fetchLatest = async (signal) => {
-    if (Object.values(statusCells).some((element) => !element)) {
-      return null;
-    }
+    if (Object.values(statusCells).some((element) => !element)) return null;
     const latest = await fetchLatestStatus(doc, fetcher, { signal });
-    if (!latest) {
-      return null;
-    }
+    if (!latest) return null;
     updateStatusCells(latest, statusCells);
     return latest;
   };

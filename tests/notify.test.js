@@ -71,6 +71,16 @@ describe("notify", () => {
     expect(toasts.length).toBe(2);
   });
 
+  it("normalizes missing messages to empty strings", async () => {
+    const { notify } = await import("../src/notify.js");
+    notify(doc, "Seed");
+    notify(doc);
+
+    const toasts = doc.querySelectorAll(".toast");
+    expect(toasts).toHaveLength(2);
+    expect(toasts[1].textContent).toBe("");
+  });
+
   it("should remove multiple toasts independently", async () => {
     const { notify } = await import("../src/notify.js");
     notify(doc, "Test message 1");
@@ -101,5 +111,57 @@ describe("notify", () => {
     notify(doc, "Test message");
     const container = doc.getElementById("notification-container");
     expect(container).toBeNull();
+  });
+
+  it("should ignore missing documents", async () => {
+    const { notify } = await import("../src/notify.js");
+    expect(() => notify(null, "Test message")).not.toThrow();
+  });
+
+  it("should ignore documents without getElementById", async () => {
+    const { createNotifier } = await import("../src/notify.js");
+    const notifier = createNotifier({});
+    expect(() => notifier.notify("Test message")).not.toThrow();
+  });
+
+  it("should ignore disconnected containers", async () => {
+    const { createNotifier } = await import("../src/notify.js");
+    const notifier = createNotifier({ getElementById: () => ({ isConnected: false }) });
+    expect(() => notifier.notify("Test message")).not.toThrow();
+  });
+
+  it("isolates notifications per document", async () => {
+    const { notify } = await import("../src/notify.js");
+    const docA = new JSDOM('<!DOCTYPE html><html><body><div id="notification-container"></div></body></html>').window
+      .document;
+    const docB = new JSDOM('<!DOCTYPE html><html><body><div id="notification-container"></div></body></html>').window
+      .document;
+
+    notify(docA, "Test message");
+    notify(docB, "Test message");
+
+    expect(docA.querySelectorAll(".toast")).toHaveLength(1);
+    expect(docB.querySelectorAll(".toast")).toHaveLength(1);
+  });
+
+  it("reports errors and notifies", async () => {
+    const { reportError } = await import("../src/notify.js");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    reportError(doc, "Something went wrong", { code: "oops" });
+
+    expect(errorSpy).toHaveBeenCalledWith("Something went wrong", { code: "oops" });
+    expect(doc.querySelectorAll(".toast")).toHaveLength(1);
+    errorSpy.mockRestore();
+  });
+
+  it("reports errors without details", async () => {
+    const { reportError } = await import("../src/notify.js");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    reportError(doc, "Just a message");
+
+    expect(errorSpy).toHaveBeenCalledWith("Just a message");
+    errorSpy.mockRestore();
   });
 });
