@@ -18,6 +18,9 @@ export const bindLinkClicks = (doc, selector, handler) => {
   });
 };
 
+const DATA_API_DELAY_MS = 200;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, youtubePlay, elements } = instance;
 
@@ -37,7 +40,12 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (link.dataset.api) {
       try {
         const apiCommands = parseApiCommands(link.dataset.api);
-        await Promise.all(apiCommands.map((args) => fetcher(apiUrl(replaceHostTokens(args)))));
+        for (let index = 0; index < apiCommands.length; index += 1) {
+          await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
+          if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
+            await delay(DATA_API_DELAY_MS);
+          }
+        }
       } catch (error) {
         console.error("Failed to execute data-api commands", error);
         return;
