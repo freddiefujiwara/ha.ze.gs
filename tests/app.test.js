@@ -184,7 +184,8 @@ describe("app bootstrap", () => {
       <div id="Date"></div>
       <div id="Temperature"></div>
       <div id="Humid"></div>
-      <a href="#" data-api='["hue","lights","off"]'>API</a>
+      <a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>
+      <a href="#" data-api='["hue",]'>BrokenAPI</a>
       <a href="#" data-message-key="car-arrival">CarArrives</a>
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-status-action="control">Status</a>
@@ -203,12 +204,14 @@ describe("app bootstrap", () => {
     vi.stubGlobal("fetch", fetcher);
     await import("../src/app.js");
 
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-message-key]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-key]").dispatchEvent(new Event("click"));
+    document.querySelector("a[data-api='[\"hue\",]']").dispatchEvent(new Event("click"));
     await flushPromises();
 
     window.api(["hue", "lights", "on"]);
@@ -216,11 +219,13 @@ describe("app bootstrap", () => {
     window.youtubePlay("192.168.1.22");
 
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
     expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
     expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");
+    expect(errorSpy).toHaveBeenCalled();
 
     const youtubeInput = document.getElementById("youtube_url");
     youtubeInput.value = "テスト";
@@ -231,6 +236,7 @@ describe("app bootstrap", () => {
     youtubeInput.dispatchEvent(new Event("blur"));
     expect(youtubeInput.value).toBe("https://youtu.be/abc123");
 
+    errorSpy.mockRestore();
     vi.unstubAllGlobals();
   });
 });

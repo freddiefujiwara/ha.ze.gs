@@ -3,6 +3,7 @@ import {
   buildCarArrivalArgs,
   buildStatusUrl,
   initApp,
+  parseApiCommands,
   parseYouTubeId,
   replaceHostTokens,
   resolveHost,
@@ -34,7 +35,13 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
-      await fetcher(apiUrl(replaceHostTokens(JSON.parse(link.dataset.api))));
+      try {
+        const apiCommands = parseApiCommands(link.dataset.api);
+        await Promise.all(apiCommands.map((args) => fetcher(apiUrl(replaceHostTokens(args)))));
+      } catch (error) {
+        console.error("Failed to execute data-api commands", error);
+        return;
+      }
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
