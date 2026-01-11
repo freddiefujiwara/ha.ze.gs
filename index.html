@@ -325,37 +325,95 @@ const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
 const replaceHostTokens = (args) =>
   args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
 
-let lastMessage = "";
-let debounceTimer;
+const DEFAULT_OPTIONS = {
+  containerId: "notification-container",
+  debounceMs: NOTIFY_DEBOUNCE_MS,
+  durationMs: NOTIFY_DURATION_MS,
+  showDelayMs: 10,
+  transitionMs: 300,
+};
 
-const notify = (doc, message) => {
-  const hideToast = (element) => {
-    element.classList.remove("show");
-    setTimeout(() => element.remove(), 300);
-  };
+const notifierCache = new WeakMap();
 
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    lastMessage = "";
-  }, NOTIFY_DEBOUNCE_MS);
+const normalizeMessage = (message) => String(message ?? "");
 
-  if (lastMessage === message) {
-    return;
+const resolveContainer = (doc, containerId) => {
+  if (!doc?.getElementById) {
+    return null;
   }
-  lastMessage = message;
-
-  const container = doc.getElementById("notification-container");
+  const container = doc.getElementById(containerId);
   if (!container) {
-    return;
+    return null;
   }
+  return container.isConnected === false ? null : container;
+};
 
+const createToast = (doc, message) => {
   const toast = doc.createElement("div");
   toast.className = "toast";
   toast.textContent = message;
-  container.appendChild(toast);
+  return toast;
+};
 
-  setTimeout(() => toast.classList.add("show"), 10);
-  setTimeout(() => hideToast(toast), NOTIFY_DURATION_MS);
+const createNotifier = (doc, options = {}) => {
+  const settings = { ...DEFAULT_OPTIONS, ...options };
+  let lastMessage = "";
+  let debounceTimer;
+
+  const scheduleDebounceReset = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      lastMessage = "";
+    }, settings.debounceMs);
+  };
+
+  const removeToast = (toast) => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), settings.transitionMs);
+  };
+
+  const notify = (message) => {
+    scheduleDebounceReset();
+    const normalizedMessage = normalizeMessage(message);
+    if (lastMessage === normalizedMessage) {
+      return;
+    }
+    lastMessage = normalizedMessage;
+
+    const container = resolveContainer(doc, settings.containerId);
+    if (!container) {
+      return;
+    }
+
+    const toast = createToast(doc, normalizedMessage);
+    container.appendChild(toast);
+
+    setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
+    setTimeout(() => removeToast(toast), settings.durationMs);
+  };
+
+  return { notify };
+};
+
+const notify = (doc, message) => {
+  if (!doc) {
+    return;
+  }
+  let notifier = notifierCache.get(doc);
+  if (!notifier) {
+    notifier = createNotifier(doc);
+    notifierCache.set(doc, notifier);
+  }
+  notifier.notify(message);
+};
+
+const reportError = (doc, message, details) => {
+  if (details === undefined) {
+    console.error(message);
+  } else {
+    console.error(message, details);
+  }
+  notify(doc, message);
 };
 
 const buildAlarmUrl = (hour, minute, text) => {
@@ -368,36 +426,56 @@ const buildAlarmUrl = (hour, minute, text) => {
 
 const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
-const parseLatestPayload = (doc, payload) => {
-  const trimmed = payload.trim();
-  const stripped = trimmed
+const stripStatusCallback = (value) =>
+  value
     .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
     .replace(/\);?\s*$/, "");
-  const cleaned = /^[{[]/.test(trimmed)
-    ? trimmed
-    : stripped.trim();
+
+const normalizePayload = (payload) => {
+  const trimmed = payload.trim();
+  if (!trimmed) {
+    return "";
+  }
+  if (/^[{[]/.test(trimmed)) {
+    return trimmed;
+  }
+  return stripStatusCallback(trimmed).trim();
+};
+
+const parseConditions = (doc, payload) => {
   try {
-    const { conditions, status } = JSON.parse(cleaned);
+    const { conditions, status } = JSON.parse(payload);
     if (!Array.isArray(conditions) || !conditions.length) {
-      console.error(ERROR_MESSAGES.MISSING_CONDITIONS, {
+      reportError(doc, ERROR_MESSAGES.MISSING_CONDITIONS, {
         hasConditions: Array.isArray(conditions),
         length: Array.isArray(conditions) ? conditions.length : null,
       });
-      notify(doc, ERROR_MESSAGES.MISSING_CONDITIONS);
       return null;
     }
     const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
-    const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;
-    console.error(ERROR_MESSAGES.FETCH_PAYLOAD, {
+    const cleanedPreview = payload.length > 200 ? `${payload.slice(0, 200)}…` : payload;
+    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
       cleanedPreview,
-      cleanedLength: cleaned.length,
+      cleanedLength: payload.length,
       error,
     });
-    notify(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
     return null;
   }
+};
+
+const parseLatestPayload = (doc, payload) => {
+  const cleaned = normalizePayload(payload);
+  if (!cleaned) {
+    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
+      cleanedPreview: "",
+      cleanedLength: 0,
+      error: new Error("Empty payload"),
+    });
+    return null;
+  }
+  return parseConditions(doc, cleaned);
 };
 
 const fetchLatestStatus = async (doc, fetcher, { signal } = {}) => {
@@ -405,12 +483,11 @@ const fetchLatestStatus = async (doc, fetcher, { signal } = {}) => {
   const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
   const payload = await response.text();
   if (!response.ok) {
-    console.error(ERROR_MESSAGES.FETCH_PAYLOAD, {
+    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
       status: response.status,
       statusText: response.statusText,
       preview: payload.slice(0, 200),
     });
-    notify(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
   }
   return parseLatestPayload(doc, payload);
 };
@@ -548,6 +625,10 @@ const parseApiCommands = (value) => {
   return parsed.every(Array.isArray) ? parsed : [parsed];
 };
 
+const reportTooLong = (doc, value) => {
+  reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
+};
+
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) {
     hourSelect.innerHTML = buildTimeOptions(24);
@@ -579,16 +660,14 @@ const initApp = (doc, fetcher = fetch) => {
   voicetext.addEventListener("input", () => {
     const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
     if (!ok) {
-      console.error(ERROR_MESSAGES.TOO_LONG, voicetext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
+      reportTooLong(doc, voicetext.value);
     }
   });
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
     if (!alarmUrl) {
-      console.error(ERROR_MESSAGES.TOO_LONG, alarmtext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
+      reportTooLong(doc, alarmtext.value);
       return false;
     }
     await fetcher(alarmUrl);
@@ -601,8 +680,7 @@ const initApp = (doc, fetcher = fetch) => {
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
       if (youtubeUrl.value) {
-        console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-        notify(doc, ERROR_MESSAGES.INVALID_URL);
+        reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       }
       youtubeUrl.value = "";
       return null;
@@ -665,14 +743,27 @@ const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
       if (error?.name !== "AbortError") {
-        console.error(ERROR_MESSAGES.FETCH_STATUS, error);
-        notify(doc, ERROR_MESSAGES.FETCH_STATUS);
+        reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
       }
       schedule(nextDelay(error));
     }
   };
   run();
   return () => clearTimeout(timerId);
+};
+
+const handleDataApi = async (doc, fetcher, dataApi) => {
+  try {
+    const apiCommands = parseApiCommands(dataApi);
+    for (let index = 0; index < apiCommands.length; index += 1) {
+      await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
+      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
+        await delay(DATA_API_DELAY_MS);
+      }
+    }
+  } catch (error) {
+    reportError(doc, ERROR_MESSAGES.EXEC_COMMANDS, error);
+  }
 };
 
 const wireEvents = (doc, fetcher, instance) => {
@@ -688,27 +779,14 @@ const wireEvents = (doc, fetcher, instance) => {
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
-      console.error(ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
-      notify(doc, ERROR_MESSAGES.INVALID_URL);
+      reportError(doc, ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
       elements.youtubeUrl.value = "";
     }
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
-      try {
-        const apiCommands = parseApiCommands(link.dataset.api);
-        for (let index = 0; index < apiCommands.length; index += 1) {
-          await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
-          if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
-            await delay(DATA_API_DELAY_MS);
-          }
-        }
-      } catch (error) {
-        console.error(ERROR_MESSAGES.EXEC_COMMANDS, error);
-        notify(doc, ERROR_MESSAGES.EXEC_COMMANDS);
-        return;
-      }
+      await handleDataApi(doc, fetcher, link.dataset.api);
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
@@ -739,8 +817,7 @@ const wireEvents = (doc, fetcher, instance) => {
             elements.voicetext.value = "";
           }
         } catch (error) {
-          console.error(ERROR_MESSAGES.SEND_VOICE, error);
-          notify(doc, ERROR_MESSAGES.SEND_VOICE);
+          reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
         }
       }
     });
