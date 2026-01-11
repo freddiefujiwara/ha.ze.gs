@@ -19,6 +19,9 @@ export const buildVoiceUrls = (voiceText) => {
 export const updateVoiceLinks = (voiceText, elements) => {
   if (isVoiceTextTooLong(voiceText)) {
     console.error(`Too long text : ${voiceText}`);
+    if (elements.voicetext) {
+      elements.voicetext.value = "";
+    }
     return false;
   }
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
