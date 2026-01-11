@@ -56,9 +56,7 @@ const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
   if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
-  const setIfExists = (select, value) => {
-    if (select.querySelector(`option[value="${value}"]`)) select.value = value;
-  };
+  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
   setIfExists(hourSelect, padTime(now.getHours()));
   setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
@@ -79,10 +77,7 @@ export const initApp = (doc, fetcher = fetch) => {
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    if (!alarmUrl) {
-      reportTooLong(doc, alarmtext.value);
-      return false;
-    }
+    if (!alarmUrl) return reportTooLong(doc, alarmtext.value), false;
     await fetcher(alarmUrl);
     return true;
   };

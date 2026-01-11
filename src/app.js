@@ -12,12 +12,12 @@ import {
 import { reportError } from "./notify.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
-  doc.querySelectorAll(selector).forEach((link) => {
+  doc.querySelectorAll(selector).forEach((link) =>
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       await handler(link);
-    });
-  });
+    }),
+  );
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -60,8 +60,7 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    const didSet = await setAlarm();
-    if (didSet) elements.alarmtext.value = "";
+    if (await setAlarm()) elements.alarmtext.value = "";
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
@@ -80,8 +79,7 @@ export const wireEvents = (doc, fetcher, instance) => {
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (!host) return;
-    const result = await instance.youtubePlay(host);
-    if (result) elements.youtubeUrl.value = "";
+    if (await instance.youtubePlay(host)) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {

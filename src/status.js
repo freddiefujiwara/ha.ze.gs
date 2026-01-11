@@ -11,8 +11,7 @@ const stripStatusCallback = (value) =>
 const normalizePayload = (payload) => {
   const trimmed = payload.trim();
   if (!trimmed) return "";
-  if (/^[{[]/.test(trimmed)) return trimmed;
-  return stripStatusCallback(trimmed).trim();
+  return /^[{[]/.test(trimmed) ? trimmed : stripStatusCallback(trimmed).trim();
 };
 
 const parseConditions = (doc, payload) => {
@@ -83,14 +82,8 @@ export const updateStatusCells = (latest, elements) => {
   if (!latest || typeof latest !== "object") return;
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
-    if (key === "AirCondition") {
-      elements[key].innerText = value == null ? "AirCondition" : String(value);
-      return;
-    }
-    if (key === "Date") {
-      elements[key].innerText = formatDateTimeLocal(value);
-      return;
-    }
+    if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : String(value));
+    if (key === "Date") return void (elements[key].innerText = formatDateTimeLocal(value));
     elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
   });
 };

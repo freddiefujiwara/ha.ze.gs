@@ -8,56 +8,44 @@ const DEFAULT_OPTIONS = {
   transitionMs: 300,
 };
 
-const notifierCache = new WeakMap();
-const normalizeMessage = (message) => String(message ?? "");
-const getContainer = (doc, containerId) => doc?.getElementById?.(containerId) ?? null;
+const cache = new WeakMap();
+const messageText = (message) => String(message ?? "");
 
 export const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
-  let debounceTimer;
-  const reset = () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
+  let timer;
+  const notify = (message) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
       lastMessage = "";
     }, settings.debounceMs);
-  };
-  const hide = (toast) => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.remove(), settings.transitionMs);
-  };
-  const notify = (message) => {
-    reset();
-    const text = normalizeMessage(message);
-    if (lastMessage === text) return;
+    const text = messageText(message);
+    if (text === lastMessage) return;
     lastMessage = text;
-    const container = getContainer(doc, settings.containerId);
+    const container = doc?.getElementById?.(settings.containerId);
     if (!container || container.isConnected === false) return;
     const toast = doc.createElement("div");
     toast.className = "toast";
     toast.textContent = text;
     container.appendChild(toast);
     setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
-    setTimeout(() => hide(toast), settings.durationMs);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), settings.transitionMs);
+    }, settings.durationMs);
   };
   return { notify };
 };
 
 export const notify = (doc, message) => {
   if (!doc) return;
-  let notifier = notifierCache.get(doc);
-  if (!notifier) {
-    notifier = createNotifier(doc);
-    notifierCache.set(doc, notifier);
-  }
+  const notifier = cache.get(doc) ?? createNotifier(doc);
+  cache.set(doc, notifier);
   notifier.notify(message);
 };
 
 export const reportError = (doc, message, details) => {
-  if (details === undefined) {
-    console.error(message);
-  } else {
-    console.error(message, details);
-  }
+  details === undefined ? console.error(message) : console.error(message, details);
   notify(doc, message);
 };
