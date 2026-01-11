@@ -1,11 +1,8 @@
-import { MAX_ALARM_TEXT } from "./constants.js";
+import { ALARM_SCRIPT_URL, MAX_TEXT } from "./constants.js";
 import { isTextTooLong, sanitizeText } from "./text.js";
 
-const ALARM_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
-
 export const buildAlarmUrl = (hour, minute, text) => {
-  if (isTextTooLong(text, MAX_ALARM_TEXT)) {
+  if (isTextTooLong(text, MAX_TEXT)) {
     console.error(`Too long text : ${text}`);
     return null;
   }

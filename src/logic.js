@@ -1,5 +1,6 @@
 import { buildAlarmUrl } from "./alarm.js";
-import { apiUrl, DEVICE_HOSTS, replaceHostTokens, resolveHost } from "./hosts.js";
+import { DEVICE_HOSTS } from "./constants.js";
+import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
 import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
 import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";

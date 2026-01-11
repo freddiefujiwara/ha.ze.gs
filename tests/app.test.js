@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_ALARM_TEXT } from "../src/constants.js";
+import { MAX_TEXT } from "../src/constants.js";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
 import { scheduleLatestFetch, wireEvents } from "../src/app.js";
 
@@ -37,6 +37,7 @@ describe("app wiring", () => {
 
   beforeEach(() => {
     fetcher = vi.fn().mockResolvedValue({
+      ok: true,
       text: vi
         .fn()
         .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"cool\"});"),
@@ -151,6 +152,27 @@ describe("app wiring", () => {
 
     vi.useRealTimers();
   });
+
+  it("does not clear voice text on fetch failure", async () => {
+    const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const document = buildDocument();
+    const error = new Error("network");
+    const failingFetcher = vi.fn().mockRejectedValue(error);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const instance = initApp(document, failingFetcher);
+    wireEvents(document, failingFetcher, instance);
+
+    document.getElementById("voicetext").value = "test";
+    document.getElementById("speak").dataset.url = "http://example.com/speak";
+    document.getElementById("speak").dispatchEvent(new Event("click"));
+    await flushPromises();
+
+    expect(failingFetcher).toHaveBeenCalledWith("http://example.com/speak");
+    expect(document.getElementById("voicetext").value).toBe("test");
+    expect(errorSpy).toHaveBeenCalledWith("Failed to send voice command", error);
+
+    errorSpy.mockRestore();
+  });
 });
 
 describe("app bootstrap", () => {
@@ -159,13 +181,12 @@ describe("app bootstrap", () => {
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
     const document = buildDocument();
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue({
-        text: vi
-          .fn()
-          .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"auto\"});"),
-      });
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi
+        .fn()
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"auto\"});"),
+    });
 
     vi.stubGlobal("fetch", fetcher);
 
@@ -184,10 +205,11 @@ describe("app bootstrap", () => {
     await flushPromises();
     expect(document.getElementById("alarmtext").value).toBe("");
 
-    document.getElementById("alarmtext").value = `${MAX_ALARM_TEXT}a`;
+    const tooLongText = `${MAX_TEXT}a`;
+    document.getElementById("alarmtext").value = tooLongText;
     document.getElementById("set").dispatchEvent(new Event("click"));
     await flushPromises();
-    expect(document.getElementById("alarmtext").value).toBe(`${MAX_ALARM_TEXT}a`);
+    expect(document.getElementById("alarmtext").value).toBe(tooLongText);
 
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
@@ -202,7 +224,7 @@ describe("app bootstrap", () => {
     document.getElementById("speak").removeAttribute("data-url");
     document.getElementById("speak").dispatchEvent(new Event("click"));
     await flushPromises();
-    expect(document.getElementById("voicetext").value).toBe("");
+    expect(document.getElementById("voicetext").value).toBe("too long");
 
     document.getElementById("speak_tatami").dataset.url = "http://example.com/tatami";
     document.getElementById("speak_tatami").dispatchEvent(new Event("click"));

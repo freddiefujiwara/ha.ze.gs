@@ -1,7 +1,4 @@
-const STATUS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
-const STATUS_CALLBACK = "__statusCallback";
-const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
+import { STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
 
 export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
@@ -22,7 +19,7 @@ export const parseLatestPayload = (payload) => {
       });
       return null;
     }
-    const latest = conditions.pop();
+    const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;

@@ -1,6 +1,4 @@
-import { API_BASE_URL_VALUE } from "./hosts.js";
-
-const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+import { API_BASE_URL, YOUTUBE_HOSTS } from "./constants.js";
 
 export const parseYouTubeId = (youtubeUrl) => {
   if (!youtubeUrl) {
@@ -44,5 +42,5 @@ export const buildYouTubePlayUrl = (host, youtubeUrl) => {
   if (!videoId) {
     return null;
   }
-  return `${API_BASE_URL_VALUE}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+  return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };

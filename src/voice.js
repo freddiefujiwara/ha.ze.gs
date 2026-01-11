@@ -1,19 +1,16 @@
-import { MAX_VOICE_TEXT } from "./constants.js";
-import { API_BASE_URL_VALUE, DEVICE_HOSTS } from "./hosts.js";
+import { API_BASE_URL, CAR_ARRIVAL_MESSAGE, DEVICE_HOSTS, MAX_TEXT, VOICE_HOSTS } from "./constants.js";
 import { isTextTooLong, sanitizeText } from "./text.js";
 
-const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
-const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 export const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
   return {
-    speak: `${API_BASE_URL_VALUE}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
-    speakTatami: `${API_BASE_URL_VALUE}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
+    speak: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
+    speakTatami: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
   };
 };
 
 export const updateVoiceLinks = (voiceText, elements) => {
-  if (isTextTooLong(voiceText, MAX_VOICE_TEXT)) {
+  if (isTextTooLong(voiceText, MAX_TEXT)) {
     console.error(`Too long text : ${voiceText}`);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
