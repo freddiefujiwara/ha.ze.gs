@@ -346,6 +346,9 @@ const buildVoiceUrls = (voiceText) => {
 const updateVoiceLinks = (voiceText, elements) => {
   if (isVoiceTextTooLong(voiceText)) {
     console.error(`Too long text : ${voiceText}`);
+    if (elements.voicetext) {
+      elements.voicetext.value = "";
+    }
     return false;
   }
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
@@ -468,7 +471,7 @@ const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, { speak, speakTatami });
+    updateVoiceLinks(voicetext.value, { speak, speakTatami, voicetext });
   });
 
   const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
