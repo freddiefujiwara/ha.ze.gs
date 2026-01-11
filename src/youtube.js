@@ -1,39 +1,39 @@
-import { API_BASE_URL, YOUTUBE_HOSTS } from "./constants.js";
+import { API_BASE_URL, ERROR_MESSAGES, YOUTUBE_HOSTS } from "./constants.js";
 
 export const parseYouTubeId = (youtubeUrl) => {
   if (!youtubeUrl) {
-    return "";
+    return null;
   }
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      console.error(`Invalid URL: ${youtubeUrl}`);
-      return "";
+      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+      return null;
     }
     if (parsed.hostname === "youtu.be") {
-      return parsed.pathname.split("/")[1] || "";
+      return parsed.pathname.split("/")[1] || null;
     }
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
-      console.error(`Invalid URL: ${youtubeUrl}`);
-      return "";
+      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+      return null;
     }
 
     const handlers = [
       {
         match: () => parsed.pathname === "/watch",
-        getId: () => parsed.searchParams.get("v") || "",
+        getId: () => parsed.searchParams.get("v") || null,
       },
       {
         match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
-        getId: () => parsed.pathname.split("/")[2] || "",
+        getId: () => parsed.pathname.split("/")[2] || null,
       },
     ];
 
     const handler = handlers.find(({ match }) => match());
-    return handler ? handler.getId() : "";
+    return handler ? handler.getId() : null;
   } catch {
-    console.error(`Invalid URL: ${youtubeUrl}`);
-    return "";
+    console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+    return null;
   }
 };
 

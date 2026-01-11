@@ -35,4 +35,6 @@ export const ERROR_MESSAGES = {
   INVALID_DATA_API: "Invalid data-api payload",
   MISSING_CONDITIONS: "Missing status conditions",
   FETCH_PAYLOAD: "Failed to fetch status payload",
+  INVALID_URL: "Invalid URL",
+  TOO_LONG: "Too long text",
 };

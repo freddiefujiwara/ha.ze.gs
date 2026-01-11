@@ -1,4 +1,4 @@
-import { API_BASE_URL, CAR_ARRIVAL_MESSAGE, DEVICE_HOSTS, MAX_TEXT, VOICE_HOSTS } from "./constants.js";
+import { API_BASE_URL, CAR_ARRIVAL_MESSAGE, DEVICE_HOSTS, ERROR_MESSAGES, MAX_TEXT, VOICE_HOSTS } from "./constants.js";
 import { isTextTooLong, sanitizeText } from "./text.js";
 
 export const buildVoiceUrls = (voiceText) => {
@@ -11,7 +11,7 @@ export const buildVoiceUrls = (voiceText) => {
 
 export const updateVoiceLinks = (voiceText, elements) => {
   if (isTextTooLong(voiceText, MAX_TEXT)) {
-    console.error(`Too long text : ${voiceText}`);
+    console.error(ERROR_MESSAGES.TOO_LONG, voiceText);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
     return false;

@@ -81,12 +81,16 @@ export const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, { speak, speakTatami });
+    const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
+    if (!ok) {
+      notify(doc, ERROR_MESSAGES.TOO_LONG);
+    }
   });
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
     if (!alarmUrl) {
+      notify(doc, ERROR_MESSAGES.TOO_LONG);
       return false;
     }
     await fetcher(alarmUrl);
@@ -98,6 +102,9 @@ export const initApp = (doc, fetcher = fetch) => {
     }
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
+      if (youtubeUrl.value) {
+        notify(doc, ERROR_MESSAGES.INVALID_URL);
+      }
       youtubeUrl.value = "";
       return null;
     }

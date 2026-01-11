@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_TEXT } from "../src/constants.js";
+import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
 
 const buildDocument = () => window.document.implementation.createHTMLDocument("test");
@@ -34,7 +34,7 @@ describe("voice", () => {
     const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
 
     expect(updated).toBe(false);
-    expect(errorSpy).toHaveBeenCalledWith(`Too long text : ${tooLong}`);
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.TOO_LONG, tooLong);
     expect(speak.dataset.url).toBeUndefined();
     expect(speakTatami.dataset.url).toBeUndefined();
     expect(speak.getAttribute("href")).toBeNull();
