@@ -59,7 +59,7 @@ export const wireEvents = (doc, fetcher, instance) => {
     }
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
       try {
         const apiCommands = parseApiCommands(link.dataset.api);
@@ -76,9 +76,6 @@ export const wireEvents = (doc, fetcher, instance) => {
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
-    }
-    if (link.dataset.fetch) {
-      await fetcher(link.dataset.fetch);
     }
     if (link.dataset.statusAction) {
       await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));

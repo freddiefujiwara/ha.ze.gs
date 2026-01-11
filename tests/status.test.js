@@ -27,6 +27,14 @@ describe("status", () => {
     expect(parseLatestPayload(payload)).toEqual({ Date: "now" });
   });
 
+  it("returns null for invalid json", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const payload = "__statusCallback&&__statusCallback(invalid);";
+    expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       text: vi
@@ -90,17 +98,6 @@ describe("status", () => {
     updateStatusCells({ Date: "now", Temperature: "20", Humid: "50" }, elements);
 
     expect(elements.AirCondition.innerText).toBe("AirCondition");
-  });
-
-  it("does nothing for null latest", () => {
-    const document = window.document.implementation.createHTMLDocument("test");
-    const elements = {
-      AirCondition: document.createElement("div"),
-    };
-
-    updateStatusCells(null, elements);
-
-    expect(elements.AirCondition.innerText).toBeUndefined();
   });
 
   it("builds status url", () => {

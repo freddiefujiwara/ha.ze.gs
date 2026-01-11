@@ -9,11 +9,16 @@ export const parseLatestPayload = (payload) => {
   const cleaned = payload
     .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
     .replace(/\);$/, "");
-  const { conditions, status } = JSON.parse(cleaned);
-  const latest = conditions?.pop?.();
-  if (!latest) return null;
-  const airCondition = status;
-  return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
+  try {
+    const { conditions, status } = JSON.parse(cleaned);
+    const latest = conditions?.pop?.();
+    if (!latest) return null;
+    const airCondition = status;
+    return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
+  } catch (error) {
+    console.error("Failed to parse status payload", { cleaned, error });
+    return null;
+  }
 };
 
 export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
@@ -40,9 +45,6 @@ const formatDateTimeLocal = (value) => {
 };
 
 export const updateStatusCells = (latest, elements) => {
-  if (!latest) {
-    return;
-  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
