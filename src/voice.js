@@ -24,8 +24,6 @@ export const updateVoiceLinks = (voiceText, elements) => {
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
   elements.speak.dataset.url = speak;
   elements.speakTatami.dataset.url = speakTatami;
-  elements.speak.setAttribute("href", "#");
-  elements.speakTatami.setAttribute("href", "#");
   return true;
 };
 
