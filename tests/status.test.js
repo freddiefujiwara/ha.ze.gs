@@ -35,6 +35,21 @@ describe("status", () => {
     errorSpy.mockRestore();
   });
 
+  it("logs a preview when invalid json is long", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const longPayload = "__statusCallback&&__statusCallback(" + "x".repeat(300) + ");";
+
+    expect(parseLatestPayload(longPayload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+
+    const [, details] = errorSpy.mock.calls[0];
+    expect(details.cleanedPreview.length).toBeGreaterThan(0);
+    expect(details.cleanedPreview.endsWith("…")).toBe(true);
+    expect(details.cleanedLength).toBeGreaterThan(details.cleanedPreview.length);
+
+    errorSpy.mockRestore();
+  });
+
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       text: vi
@@ -98,6 +113,19 @@ describe("status", () => {
     updateStatusCells({ Date: "now", Temperature: "20", Humid: "50" }, elements);
 
     expect(elements.AirCondition.innerText).toBe("AirCondition");
+  });
+
+  it("no-ops when latest is missing or invalid", () => {
+    const document = window.document.implementation.createHTMLDocument("test");
+    const elements = {
+      AirCondition: document.createElement("div"),
+      Date: document.createElement("div"),
+      Temperature: document.createElement("div"),
+      Humid: document.createElement("div"),
+    };
+
+    expect(() => updateStatusCells(null, elements)).not.toThrow();
+    expect(() => updateStatusCells("invalid", elements)).not.toThrow();
   });
 
   it("builds status url", () => {

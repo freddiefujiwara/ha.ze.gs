@@ -16,7 +16,14 @@ export const parseLatestPayload = (payload) => {
     const airCondition = status;
     return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
   } catch (error) {
-    console.error("Failed to parse status payload", { cleaned, error });
+    const previewLimit = 200;
+    const cleanedPreview =
+      cleaned.length > previewLimit ? `${cleaned.slice(0, previewLimit)}…` : cleaned;
+    console.error("Failed to parse status payload", {
+      cleanedPreview,
+      cleanedLength: cleaned.length,
+      error,
+    });
     return null;
   }
 };
@@ -45,6 +52,9 @@ const formatDateTimeLocal = (value) => {
 };
 
 export const updateStatusCells = (latest, elements) => {
+  if (!latest || typeof latest !== "object") {
+    return;
+  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
