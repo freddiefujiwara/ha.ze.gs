@@ -252,6 +252,9 @@ const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
 const DATA_API_DELAY_MS = 200;
 const STATUS_INTERVAL_MS = 10 * 60 * 1000;
 const STATUS_BACKOFF_MS = 60 * 1000;
+const MAX_ALARM_TEXT =
+  "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
+const MAX_VOICE_TEXT = MAX_ALARM_TEXT;
 
 const API_BASE_URL = "http://a.ze.gs";
 const DEVICE_HOSTS = {
@@ -270,7 +273,15 @@ const API_BASE_URL_VALUE = API_BASE_URL;
 const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
 
+const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_ALARM_TEXT).length;
+const isAlarmTextTooLong = (alarmText) =>
+  encodeURIComponent(normalizeText(alarmText)).length > MAX_ENCODED_LENGTH;
+
 const buildAlarmUrl = (hour, minute, text) => {
+  if (isAlarmTextTooLong(text)) {
+    console.error(`Too long text : ${text}`);
+    return null;
+  }
   const sanitized = sanitizeText(text);
   return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
@@ -361,8 +372,6 @@ const STATUS_CELL_KEYS = STATUS_KEYS;
 
 const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
 const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
-const MAX_VOICE_TEXT =
-  "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_VOICE_TEXT).length;
 const isVoiceTextTooLong = (voiceText) =>
   encodeURIComponent(normalizeText(voiceText)).length > MAX_ENCODED_LENGTH;
@@ -505,7 +514,14 @@ const initApp = (doc, fetcher = fetch) => {
     updateVoiceLinks(voicetext.value, { speak, speakTatami });
   });
 
-  const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
+  const setAlarm = async () => {
+    const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
+    if (!alarmUrl) {
+      return false;
+    }
+    await fetcher(alarmUrl);
+    return true;
+  };
   const youtubePlay = (host) => {
     if (!youtubeUrl) {
       return null;
@@ -587,8 +603,10 @@ const wireEvents = (doc, fetcher, instance) => {
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    await setAlarm();
-    elements.alarmtext.value = "";
+    const didSet = await setAlarm();
+    if (didSet) {
+      elements.alarmtext.value = "";
+    }
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
