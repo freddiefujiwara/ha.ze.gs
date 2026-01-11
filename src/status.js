@@ -40,9 +40,6 @@ const formatDateTimeLocal = (value) => {
 };
 
 export const updateStatusCells = (latest, elements) => {
-  if (!latest) {
-    return;
-  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {

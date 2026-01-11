@@ -41,7 +41,7 @@ npm run build
 The output is written to `dist/index.html`.
 
 ### No-JS behavior
-During build, links with `data-*` attributes are converted to real `http://a.ze.gs/...` URLs
+During build, links with `data-*` attributes are converted to `<API>` URLs
 in `dist/index.html` so text-only/no-JS browsers can use them. When JavaScript runs,
 all anchor `href`s are reset to `#` and handled via event listeners.
 
