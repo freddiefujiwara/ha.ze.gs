@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_TEXT } from "../src/constants.js";
+import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
 import { buildAlarmUrl } from "../src/alarm.js";
 
 describe("alarm", () => {
@@ -9,11 +9,8 @@ describe("alarm", () => {
     );
   });
 
-  it("returns null and logs when alarm text is too long", () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("returns null when text is too long", () => {
     const tooLong = `${MAX_TEXT}a`;
     expect(buildAlarmUrl("07", "30", tooLong)).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith(`Too long text : ${tooLong}`);
-    errorSpy.mockRestore();
   });
 });

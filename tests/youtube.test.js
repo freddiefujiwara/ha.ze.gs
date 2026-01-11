@@ -4,21 +4,16 @@ import { buildYouTubePlayUrl, parseYouTubeId } from "../src/youtube.js";
 describe("youtube", () => {
   it("parses youtube id by url form", () => {
     expect(parseYouTubeId("https://youtu.be/abc123")).toBe("abc123");
-    expect(parseYouTubeId("https://youtu.be/")).toBe("");
+    expect(parseYouTubeId("https://youtu.be/")).toBeNull();
     expect(parseYouTubeId("https://www.youtube.com/watch?v=xyz987")).toBe("xyz987");
-    expect(parseYouTubeId("https://www.youtube.com/watch")).toBe("");
+    expect(parseYouTubeId("https://www.youtube.com/watch")).toBeNull();
     expect(parseYouTubeId("https://music.youtube.com/watch?v=qwe456&feature=share")).toBe("qwe456");
     expect(parseYouTubeId("https://www.youtube.com/live/liveid?feature=share")).toBe("liveid");
-    expect(parseYouTubeId("https://www.youtube.com/live/")).toBe("");
-    expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBe("");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(parseYouTubeId("https://example.com/watch?v=abc")).toBe("");
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: https://example.com/watch?v=abc");
-    expect(parseYouTubeId("invalid")).toBe("");
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: invalid");
-    expect(parseYouTubeId("view-source:http://ha.ze.gs/")).toBe("");
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: view-source:http://ha.ze.gs/");
-    errorSpy.mockRestore();
+    expect(parseYouTubeId("https://www.youtube.com/live/")).toBeNull();
+    expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBeNull();
+    expect(parseYouTubeId("https://example.com/watch?v=abc")).toBeNull();
+    expect(parseYouTubeId("invalid")).toBeNull();
+    expect(parseYouTubeId("view-source:http://ha.ze.gs/")).toBeNull();
   });
 
   it("builds youtube play url", () => {

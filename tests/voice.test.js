@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_TEXT } from "../src/constants.js";
+import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
 
 const buildDocument = () => window.document.implementation.createHTMLDocument("test");
@@ -24,23 +24,19 @@ describe("voice", () => {
     expect(speakTatami.dataset.url).toContain("-s/test");
   });
 
-  it("logs when text is too long", () => {
+  it("returns false when text is too long", () => {
     const document = buildDocument();
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const tooLong = `${MAX_TEXT}１`;
 
     const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
 
     expect(updated).toBe(false);
-    expect(errorSpy).toHaveBeenCalledWith(`Too long text : ${tooLong}`);
     expect(speak.dataset.url).toBeUndefined();
     expect(speakTatami.dataset.url).toBeUndefined();
     expect(speak.getAttribute("href")).toBeNull();
     expect(speakTatami.getAttribute("href")).toBeNull();
-
-    errorSpy.mockRestore();
   });
 
   it("builds car arrival args", () => {

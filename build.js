@@ -34,6 +34,7 @@ const build = async () => {
     readFile(join(srcDir, "text.js"), "utf8"),
     readFile(join(srcDir, "constants.js"), "utf8"),
     readFile(join(srcDir, "hosts.js"), "utf8"),
+      readFile(join(srcDir, "notify.js"), "utf8"),
     readFile(join(srcDir, "alarm.js"), "utf8"),
     readFile(join(srcDir, "status.js"), "utf8"),
     readFile(join(srcDir, "voice.js"), "utf8"),
@@ -52,4 +53,8 @@ const build = async () => {
   await writeFile(join(distDir, "index.html"), inlined);
 };
 
-build();
+export { build as main };
+
+if (import.meta.url.startsWith("file://") && process.argv[1] === fileURLToPath(import.meta.url)) {
+  build();
+}

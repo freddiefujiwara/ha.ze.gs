@@ -1,4 +1,4 @@
-import { DATA_API_DELAY_MS, STATUS_BACKOFF_MS, STATUS_INTERVAL_MS } from "./constants.js";
+import { DATA_API_DELAY_MS, ERROR_MESSAGES, STATUS_BACKOFF_MS, STATUS_INTERVAL_MS } from "./constants.js";
 import {
   apiUrl,
   buildCarArrivalArgs,
@@ -9,6 +9,7 @@ import {
   replaceHostTokens,
   resolveHost,
 } from "./logic.js";
+import { notify } from "./notify.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -21,7 +22,7 @@ export const bindLinkClicks = (doc, selector, handler) => {
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
+export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
   let timerId;
   let controller;
   const schedule = (delayMs) => ((timerId = setTimeout(run, delayMs)), onSchedule?.(delayMs));
@@ -35,7 +36,8 @@ export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
       if (error?.name !== "AbortError") {
-        console.error("Failed to fetch latest status", error);
+        console.error(ERROR_MESSAGES.FETCH_STATUS, error);
+        notify(doc, ERROR_MESSAGES.FETCH_STATUS);
       }
       schedule(nextDelay(error));
     }
@@ -57,6 +59,8 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
+      console.error(ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
+      notify(doc, ERROR_MESSAGES.INVALID_URL);
       elements.youtubeUrl.value = "";
     }
   });
@@ -72,7 +76,8 @@ export const wireEvents = (doc, fetcher, instance) => {
           }
         }
       } catch (error) {
-        console.error("Failed to execute data-api commands", error);
+        console.error(ERROR_MESSAGES.EXEC_COMMANDS, error);
+        notify(doc, ERROR_MESSAGES.EXEC_COMMANDS);
         return;
       }
     }
@@ -105,7 +110,8 @@ export const wireEvents = (doc, fetcher, instance) => {
             elements.voicetext.value = "";
           }
         } catch (error) {
-          console.error("Failed to send voice command", error);
+          console.error(ERROR_MESSAGES.SEND_VOICE, error);
+          notify(doc, ERROR_MESSAGES.SEND_VOICE);
         }
       }
     });
@@ -120,7 +126,7 @@ export const start = (doc = document, fetcher = fetch) => {
 
   const { fetchLatest } = instance;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
-  scheduleLatestFetch(fetchLatest);
+  scheduleLatestFetch(doc, fetchLatest);
   wireEvents(doc, fetcher, instance);
 
   return instance;

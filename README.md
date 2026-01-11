@@ -8,6 +8,7 @@ This is a small web page to control home devices and show simple status values.
 - Plays YouTube on a selected device.
 - Sets an alarm time with a message.
 - Shows the latest date/time, temperature, and humidity.
+- Shows a toast notification on errors.
 
 ## Files
 - `src/index.html`: the page layout (table UI).
@@ -15,6 +16,7 @@ This is a small web page to control home devices and show simple status values.
 - `src/app.js`: wires the DOM and exposes browser globals.
 - `src/logic.js`: app glue that re-exports the modules used by `app.js`.
 - `src/constants.js`: shared constants.
+- `src/notify.js`: toast notification handler.
 - `src/alarm.js`: alarm URL builder.
 - `src/hosts.js`: API base URL + host resolution helpers.
 - `src/status.js`: status polling/parsing and status cell updates.

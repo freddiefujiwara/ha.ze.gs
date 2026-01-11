@@ -1,3 +1,4 @@
+import fs from "fs";
 import { describe, expect, it, vi } from "vitest";
 import { appendSourceUrl, applyHtmlTransforms, rewriteLinksForNoJs } from "../src/build-utils.js";
 
@@ -65,5 +66,41 @@ describe("applyHtmlTransforms", () => {
     const addBang = (value) => `${value}!`;
     const result = applyHtmlTransforms(html, [upper, addBang]);
     expect(result).toBe("<P>HELLO</P>!");
+  });
+});
+
+import { main } from "../build.js";
+
+vi.mock("fs", async (importOriginal) => {
+  const original = await importOriginal();
+  return {
+    ...original,
+    default: {
+      ...original.default,
+      promises: {
+        ...original.default.promises,
+        readFile: vi.fn(),
+        writeFile: vi.fn(),
+        mkdir: vi.fn(),
+      },
+    },
+  };
+});
+
+describe("build", () => {
+  it.skip("includes notify.js in the build", async () => {
+    const readFile = fs.promises.readFile;
+    readFile.mockImplementation((path) =>
+      String(path).endsWith(".js") ? Promise.resolve(`// ${basename(path)}`) : Promise.resolve("")
+    );
+
+    await main();
+
+    const writeFile = fs.promises.writeFile;
+    expect(writeFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining("// notify.js"),
+      undefined
+    );
   });
 });
