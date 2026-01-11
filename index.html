@@ -246,7 +246,12 @@ textarea {
       </tbody>
     </table>
 
-    <script>const sanitizeText = (value) => encodeURIComponent(value.replace(/\s+/g, "　").trim());
+    <script>const sanitizeText = (value) =>
+  encodeURIComponent(String(value ?? "").replace(/\s+/g, "　").trim());
+
+const DATA_API_DELAY_MS = 200;
+const STATUS_INTERVAL_MS = 10 * 60 * 1000;
+const STATUS_BACKOFF_MS = 60 * 1000;
 
 const API_BASE_URL = "http://a.ze.gs";
 const DEVICE_HOSTS = {
@@ -312,6 +317,9 @@ const formatDateTimeLocal = (value) => {
 };
 
 const updateStatusCells = (latest, elements) => {
+  if (!latest) {
+    return;
+  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
@@ -346,8 +354,8 @@ const buildVoiceUrls = (voiceText) => {
 const updateVoiceLinks = (voiceText, elements) => {
   if (isVoiceTextTooLong(voiceText)) {
     console.error(`Too long text : ${voiceText}`);
-    elements.speak.removeAttribute("data-url");
-    elements.speakTatami.removeAttribute("data-url");
+    delete elements.speak.dataset.url;
+    delete elements.speakTatami.dataset.url;
     return false;
   }
   const { speak, speakTatami } = buildVoiceUrls(voiceText);
@@ -491,6 +499,9 @@ const initApp = (doc, fetcher = fetch) => {
       return null;
     }
     const latest = await fetchLatestStatus(fetcher, { signal });
+    if (!latest) {
+      return null;
+    }
     updateStatusCells(latest, statusCells);
     return latest;
   };
@@ -522,10 +533,7 @@ const bindLinkClicks = (doc, selector, handler) => {
   });
 };
 
-const DATA_API_DELAY_MS = 200;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const STATUS_INTERVAL_MS = 10 * 60 * 1000;
-const STATUS_BACKOFF_MS = 60 * 1000;
 
 const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
   let timerId;
