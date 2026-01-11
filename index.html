@@ -334,71 +334,42 @@ const DEFAULT_OPTIONS = {
 };
 
 const notifierCache = new WeakMap();
-
 const normalizeMessage = (message) => String(message ?? "");
-
-const resolveContainer = (doc, containerId) => {
-  if (!doc?.getElementById) {
-    return null;
-  }
-  const container = doc.getElementById(containerId);
-  if (!container) {
-    return null;
-  }
-  return container.isConnected === false ? null : container;
-};
-
-const createToast = (doc, message) => {
-  const toast = doc.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-  return toast;
-};
+const getContainer = (doc, containerId) => doc?.getElementById?.(containerId) ?? null;
 
 const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
   let debounceTimer;
-
-  const scheduleDebounceReset = () => {
+  const reset = () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       lastMessage = "";
     }, settings.debounceMs);
   };
-
-  const removeToast = (toast) => {
+  const hide = (toast) => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), settings.transitionMs);
   };
-
   const notify = (message) => {
-    scheduleDebounceReset();
-    const normalizedMessage = normalizeMessage(message);
-    if (lastMessage === normalizedMessage) {
-      return;
-    }
-    lastMessage = normalizedMessage;
-
-    const container = resolveContainer(doc, settings.containerId);
-    if (!container) {
-      return;
-    }
-
-    const toast = createToast(doc, normalizedMessage);
+    reset();
+    const text = normalizeMessage(message);
+    if (lastMessage === text) return;
+    lastMessage = text;
+    const container = getContainer(doc, settings.containerId);
+    if (!container || container.isConnected === false) return;
+    const toast = doc.createElement("div");
+    toast.className = "toast";
+    toast.textContent = text;
     container.appendChild(toast);
-
     setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
-    setTimeout(() => removeToast(toast), settings.durationMs);
+    setTimeout(() => hide(toast), settings.durationMs);
   };
-
   return { notify };
 };
 
 const notify = (doc, message) => {
-  if (!doc) {
-    return;
-  }
+  if (!doc) return;
   let notifier = notifierCache.get(doc);
   if (!notifier) {
     notifier = createNotifier(doc);
@@ -433,12 +404,8 @@ const stripStatusCallback = (value) =>
 
 const normalizePayload = (payload) => {
   const trimmed = payload.trim();
-  if (!trimmed) {
-    return "";
-  }
-  if (/^[{[]/.test(trimmed)) {
-    return trimmed;
-  }
+  if (!trimmed) return "";
+  if (/^[{[]/.test(trimmed)) return trimmed;
   return stripStatusCallback(trimmed).trim();
 };
 
@@ -455,9 +422,8 @@ const parseConditions = (doc, payload) => {
     const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
-    const cleanedPreview = payload.length > 200 ? `${payload.slice(0, 200)}…` : payload;
     reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
-      cleanedPreview,
+      cleanedPreview: payload.length > 200 ? `${payload.slice(0, 200)}…` : payload,
       cleanedLength: payload.length,
       error,
     });
@@ -598,7 +564,6 @@ const buildYouTubePlayUrl = (host, youtubeUrl) => {
 };
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
 const buildTimeOptions = (count) =>
@@ -625,21 +590,13 @@ const parseApiCommands = (value) => {
   return parsed.every(Array.isArray) ? parsed : [parsed];
 };
 
-const reportTooLong = (doc, value) => {
-  reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
-};
+const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  if (!hourSelect.options.length) {
-    hourSelect.innerHTML = buildTimeOptions(24);
-  }
-  if (!minuteSelect.options.length) {
-    minuteSelect.innerHTML = buildTimeOptions(60);
-  }
+  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
+  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
   const setIfExists = (select, value) => {
-    if (select.querySelector(`option[value="${value}"]`)) {
-      select.value = value;
-    }
+    if (select.querySelector(`option[value="${value}"]`)) select.value = value;
   };
   setIfExists(hourSelect, padTime(now.getHours()));
   setIfExists(minuteSelect, padTime(now.getMinutes()));
@@ -648,9 +605,7 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
 const initApp = (doc, fetcher = fetch) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
-  if (Object.values(requiredElements).some((element) => !element)) {
-    return null;
-  }
+  if (Object.values(requiredElements).some((element) => !element)) return null;
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
@@ -658,10 +613,7 @@ const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
-    if (!ok) {
-      reportTooLong(doc, voicetext.value);
-    }
+    if (!updateVoiceLinks(voicetext.value, { speak, speakTatami })) reportTooLong(doc, voicetext.value);
   });
 
   const setAlarm = async () => {
@@ -673,15 +625,12 @@ const initApp = (doc, fetcher = fetch) => {
     await fetcher(alarmUrl);
     return true;
   };
+
   const youtubePlay = (host) => {
-    if (!youtubeUrl) {
-      return null;
-    }
+    if (!youtubeUrl) return null;
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
-      if (youtubeUrl.value) {
-        reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-      }
+      if (youtubeUrl.value) reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       youtubeUrl.value = "";
       return null;
     }
@@ -689,13 +638,9 @@ const initApp = (doc, fetcher = fetch) => {
   };
 
   const fetchLatest = async (signal) => {
-    if (Object.values(statusCells).some((element) => !element)) {
-      return null;
-    }
+    if (Object.values(statusCells).some((element) => !element)) return null;
     const latest = await fetchLatestStatus(doc, fetcher, { signal });
-    if (!latest) {
-      return null;
-    }
+    if (!latest) return null;
     updateStatusCells(latest, statusCells);
     return latest;
   };
@@ -742,9 +687,7 @@ const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
       await fetchLatest(controller.signal);
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
-      if (error?.name !== "AbortError") {
-        reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
-      }
+      if (error?.name !== "AbortError") reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
       schedule(nextDelay(error));
     }
   };
@@ -757,9 +700,7 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
     const apiCommands = parseApiCommands(dataApi);
     for (let index = 0; index < apiCommands.length; index += 1) {
       await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
-      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
-        await delay(DATA_API_DELAY_MS);
-      }
+      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) await delay(DATA_API_DELAY_MS);
     }
   } catch (error) {
     reportError(doc, ERROR_MESSAGES.EXEC_COMMANDS, error);
@@ -772,9 +713,7 @@ const wireEvents = (doc, fetcher, instance) => {
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
     const didSet = await setAlarm();
-    if (didSet) {
-      elements.alarmtext.value = "";
-    }
+    if (didSet) elements.alarmtext.value = "";
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
@@ -785,40 +724,27 @@ const wireEvents = (doc, fetcher, instance) => {
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
-    if (link.dataset.api) {
-      await handleDataApi(doc, fetcher, link.dataset.api);
-    }
-    if (link.dataset.messageKey === "car-arrival") {
-      await fetcher(apiUrl(buildCarArrivalArgs()));
-    }
-    if (link.dataset.statusAction) {
-      await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
-    }
+    if (link.dataset.api) await handleDataApi(doc, fetcher, link.dataset.api);
+    if (link.dataset.messageKey === "car-arrival") await fetcher(apiUrl(buildCarArrivalArgs()));
+    if (link.dataset.statusAction) await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
   });
 
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
-    if (!host) {
-      return;
-    }
+    if (!host) return;
     const result = await instance.youtubePlay(host);
-    if (result) {
-      elements.youtubeUrl.value = "";
-    }
+    if (result) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
-      if (link.dataset.url) {
-        try {
-          const response = await fetcher(link.dataset.url);
-          if (response.ok) {
-            elements.voicetext.value = "";
-          }
-        } catch (error) {
-          reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
-        }
+      if (!link.dataset.url) return;
+      try {
+        const response = await fetcher(link.dataset.url);
+        if (response.ok) elements.voicetext.value = "";
+      } catch (error) {
+        reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
       }
     });
   });
@@ -826,25 +752,18 @@ const wireEvents = (doc, fetcher, instance) => {
 
 const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
-  if (!instance) {
-    return null;
-  }
-
-  const { fetchLatest } = instance;
+  if (!instance) return null;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
-  scheduleLatestFetch(doc, fetchLatest);
+  scheduleLatestFetch(doc, instance.fetchLatest);
   wireEvents(doc, fetcher, instance);
-
   return instance;
 };
 
 if (typeof window !== "undefined") {
   const instance = start(document, fetch);
-
   window.api = (args) => {
     fetch(apiUrl(args));
   };
-
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
 }</script>
