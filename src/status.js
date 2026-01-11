@@ -1,8 +1,9 @@
-import { STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
+import { ERROR_MESSAGES, STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
+import { notify } from "./notify.js";
 
 export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
-export const parseLatestPayload = (payload) => {
+export const parseLatestPayload = (doc, payload) => {
   const trimmed = payload.trim();
   const stripped = trimmed
     .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
@@ -13,37 +14,40 @@ export const parseLatestPayload = (payload) => {
   try {
     const { conditions, status } = JSON.parse(cleaned);
     if (!Array.isArray(conditions) || !conditions.length) {
-      console.error("Missing status conditions", {
+      console.error(ERROR_MESSAGES.MISSING_CONDITIONS, {
         hasConditions: Array.isArray(conditions),
         length: Array.isArray(conditions) ? conditions.length : null,
       });
+      notify(doc, ERROR_MESSAGES.MISSING_CONDITIONS);
       return null;
     }
     const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;
-    console.error("Failed to parse status payload", {
+    console.error(ERROR_MESSAGES.FETCH_PAYLOAD, {
       cleanedPreview,
       cleanedLength: cleaned.length,
       error,
     });
+    notify(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
     return null;
   }
 };
 
-export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
+export const fetchLatestStatus = async (doc, fetcher, { signal } = {}) => {
   const url = buildStatusUrl({ callback: STATUS_CALLBACK });
   const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
   const payload = await response.text();
   if (!response.ok) {
-    console.error("Failed to fetch status payload", {
+    console.error(ERROR_MESSAGES.FETCH_PAYLOAD, {
       status: response.status,
       statusText: response.statusText,
       preview: payload.slice(0, 200),
     });
+    notify(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
   }
-  return parseLatestPayload(payload);
+  return parseLatestPayload(doc, payload);
 };
 
 const formatDateTimeLocal = (value) => {

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_TEXT } from "../src/constants.js";
+import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
 import { scheduleLatestFetch, wireEvents } from "../src/app.js";
+
+vi.mock("../src/notify.js", () => ({
+  notify: vi.fn(),
+}));
 
 const buildOptions = (length) =>
   Array.from({ length }, (_, index) => {
@@ -35,7 +39,9 @@ const buildDocument = () => {
 describe("app wiring", () => {
   let fetcher;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { notify } = await import("../src/notify.js");
+    notify.mockClear();
     fetcher = vi.fn().mockResolvedValue({
       ok: true,
       text: vi
@@ -169,8 +175,26 @@ describe("app wiring", () => {
 
     expect(failingFetcher).toHaveBeenCalledWith("http://example.com/speak");
     expect(document.getElementById("voicetext").value).toBe("test");
-    expect(errorSpy).toHaveBeenCalledWith("Failed to send voice command", error);
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.SEND_VOICE, error);
 
+    errorSpy.mockRestore();
+  });
+
+  it("notifies on network failure", async () => {
+    const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const document = buildDocument();
+    const failingFetcher = vi.fn().mockRejectedValue(new Error("network"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const instance = initApp(document, failingFetcher);
+    const { notify } = await import("../src/notify.js");
+    wireEvents(document, failingFetcher, instance);
+
+    document.getElementById("voicetext").value = "test";
+    document.getElementById("speak").dataset.url = "http://example.com/speak";
+    document.getElementById("speak").dispatchEvent(new Event("click"));
+    await flushPromises();
+
+    expect(notify).toHaveBeenCalledWith(document, ERROR_MESSAGES.SEND_VOICE);
     errorSpy.mockRestore();
   });
 });
@@ -238,9 +262,11 @@ describe("app bootstrap", () => {
 
   it("backs off status polling on failures", async () => {
     vi.useFakeTimers();
+    const document = buildDocument();
     const onSchedule = vi.fn();
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const stop = scheduleLatestFetch(
+      document,
       () => {
         throw new Error("network");
       },
@@ -248,7 +274,7 @@ describe("app bootstrap", () => {
     );
 
     expect(onSchedule).toHaveBeenCalledWith(11 * 60 * 1000);
-    expect(errorSpy).toHaveBeenCalledWith("Failed to fetch latest status", expect.any(Error));
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.FETCH_STATUS, expect.any(Error));
 
     stop();
     errorSpy.mockRestore();
@@ -261,7 +287,7 @@ describe("app bootstrap", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const abortError = new Error("aborted");
     abortError.name = "AbortError";
-    const stop = scheduleLatestFetch(() => Promise.reject(abortError), { onSchedule });
+    const stop = scheduleLatestFetch(buildDocument(), () => Promise.reject(abortError), { onSchedule });
 
     await Promise.resolve();
 
@@ -276,7 +302,7 @@ describe("app bootstrap", () => {
   it("restarts polling after scheduled interval", async () => {
     vi.useFakeTimers();
     const fetchLatest = vi.fn().mockResolvedValue(null);
-    const stop = scheduleLatestFetch(fetchLatest);
+    const stop = scheduleLatestFetch(buildDocument(), fetchLatest);
 
     await Promise.resolve();
     await vi.advanceTimersByTimeAsync(10 * 60 * 1000);

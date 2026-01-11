@@ -1,4 +1,6 @@
 export const DATA_API_DELAY_MS = 200;
+export const NOTIFY_DEBOUNCE_MS = 2 * 1000;
+export const NOTIFY_DURATION_MS = 5 * 1000;
 export const STATUS_INTERVAL_MS = 10 * 60 * 1000;
 export const STATUS_BACKOFF_MS = 60 * 1000;
 export const MAX_TEXT =
@@ -24,3 +26,13 @@ export const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS
 export const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 
 export const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+
+export const ERROR_MESSAGES = {
+  FETCH_STATUS: "Failed to fetch latest status",
+  EXEC_COMMANDS: "Failed to execute data-api commands",
+  SEND_VOICE: "Failed to send voice command",
+  PARSE_DATA_API: "Failed to parse data-api payload",
+  INVALID_DATA_API: "Invalid data-api payload",
+  MISSING_CONDITIONS: "Missing status conditions",
+  FETCH_PAYLOAD: "Failed to fetch status payload",
+};

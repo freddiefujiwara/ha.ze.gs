@@ -1,11 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ERROR_MESSAGES } from "../src/constants.js";
 import { buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "../src/status.js";
 
+vi.mock("../src/notify.js", () => ({
+  notify: vi.fn(),
+}));
+
 describe("status", () => {
+  let doc;
+  beforeEach(() => {
+    doc = {};
+  });
   it("parses latest payload", () => {
     const payload =
       "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"},{\"Temperature\":\"20\",\"Humid\":\"50\"}],\"status\":\"cool\"});";
-    expect(parseLatestPayload(payload)).toEqual({
+    expect(parseLatestPayload(doc, payload)).toEqual({
       Temperature: "20",
       Humid: "50",
       AirCondition: "cool",
@@ -15,8 +24,8 @@ describe("status", () => {
   it("returns null for non-array payloads", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback({\"conditions\":{\"Date\":\"now\"}});";
-    expect(parseLatestPayload(payload)).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+    expect(parseLatestPayload(doc, payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.MISSING_CONDITIONS, {
       hasConditions: false,
       length: null,
     });
@@ -26,8 +35,8 @@ describe("status", () => {
   it("returns null for missing conditions", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback({\"Date\":\"now\"});";
-    expect(parseLatestPayload(payload)).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+    expect(parseLatestPayload(doc, payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.MISSING_CONDITIONS, {
       hasConditions: false,
       length: null,
     });
@@ -37,8 +46,8 @@ describe("status", () => {
   it("logs when conditions are empty", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback({\"conditions\":[]});";
-    expect(parseLatestPayload(payload)).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+    expect(parseLatestPayload(doc, payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.MISSING_CONDITIONS, {
       hasConditions: true,
       length: 0,
     });
@@ -47,40 +56,40 @@ describe("status", () => {
 
   it("keeps latest data when status missing", () => {
     const payload = "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});";
-    expect(parseLatestPayload(payload)).toEqual({ Date: "now" });
+    expect(parseLatestPayload(doc, payload)).toEqual({ Date: "now" });
   });
 
   it("parses raw json payloads", () => {
     const payload = "{\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"}";
-    expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
+    expect(parseLatestPayload(doc, payload)).toEqual({ Date: "now", AirCondition: "on" });
   });
 
   it("parses jsonp payloads", () => {
     const payload = "__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"});";
-    expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
+    expect(parseLatestPayload(doc, payload)).toEqual({ Date: "now", AirCondition: "on" });
   });
 
   it("handles raw json arrays", () => {
     const payload = "[{\"Date\":\"now\"}]";
-    expect(parseLatestPayload(payload)).toBeNull();
+    expect(parseLatestPayload(doc, payload)).toBeNull();
   });
 
   it("returns null when latest is empty", () => {
     const payload = "__statusCallback&&__statusCallback({\"conditions\":[null]});";
-    expect(parseLatestPayload(payload)).toBeNull();
+    expect(parseLatestPayload(doc, payload)).toBeNull();
   });
 
   it("returns null for invalid json", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback(invalid);";
-    expect(parseLatestPayload(payload)).toBeNull();
+    expect(parseLatestPayload(doc, payload)).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     errorSpy.mockRestore();
   });
 
   it("returns null for empty payload", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(parseLatestPayload("")).toBeNull();
+    expect(parseLatestPayload(doc, "")).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     errorSpy.mockRestore();
   });
@@ -88,7 +97,7 @@ describe("status", () => {
   it("returns null for html payload", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "<html><body>bad gateway</body></html>";
-    expect(parseLatestPayload(payload)).toBeNull();
+    expect(parseLatestPayload(doc, payload)).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     errorSpy.mockRestore();
   });
@@ -96,7 +105,7 @@ describe("status", () => {
   it("returns null for garbage payload", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "%%%$$$not-json%%%";
-    expect(parseLatestPayload(payload)).toBeNull();
+    expect(parseLatestPayload(doc, payload)).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
     errorSpy.mockRestore();
   });
@@ -105,7 +114,7 @@ describe("status", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const longPayload = "__statusCallback&&__statusCallback(" + "x".repeat(300) + ");";
 
-    expect(parseLatestPayload(longPayload)).toBeNull();
+    expect(parseLatestPayload(doc, longPayload)).toBeNull();
     expect(errorSpy).toHaveBeenCalledOnce();
 
     const [, details] = errorSpy.mock.calls[0];
@@ -126,7 +135,7 @@ describe("status", () => {
         .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"});"),
     });
 
-    await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now", AirCondition: "on" });
+    await expect(fetchLatestStatus(doc, fetcher)).resolves.toEqual({ Date: "now", AirCondition: "on" });
     expect(fetcher).toHaveBeenCalledOnce();
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?callback=__statusCallback",
@@ -144,12 +153,28 @@ describe("status", () => {
         .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
     });
 
-    await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });
-    expect(errorSpy).toHaveBeenCalledWith("Failed to fetch status payload", {
+    await expect(fetchLatestStatus(doc, fetcher)).resolves.toEqual({ Date: "now" });
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.FETCH_PAYLOAD, {
       status: 500,
       statusText: "Server Error",
       preview: "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});",
     });
+    errorSpy.mockRestore();
+  });
+
+  it("notifies when status fetch fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Server Error",
+      text: vi.fn().mockResolvedValue(""),
+    });
+    const { notify } = await import("../src/notify.js");
+
+    await fetchLatestStatus(doc, fetcher);
+
+    expect(notify).toHaveBeenCalledWith(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
     errorSpy.mockRestore();
   });
 

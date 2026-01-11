@@ -1,6 +1,7 @@
 import { buildAlarmUrl } from "./alarm.js";
-import { DEVICE_HOSTS } from "./constants.js";
+import { DEVICE_HOSTS, ERROR_MESSAGES } from "./constants.js";
 import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
+import { notify } from "./notify.js";
 import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
 import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
@@ -21,11 +22,11 @@ const parseApiCommands = (value) => {
   try {
     parsed = JSON.parse(value);
   } catch (error) {
-    console.error("Failed to parse data-api payload", error);
+    console.error(ERROR_MESSAGES.PARSE_DATA_API, error);
     throw error;
   }
   if (!Array.isArray(parsed)) {
-    const error = new Error("Invalid data-api payload");
+    const error = new Error(ERROR_MESSAGES.INVALID_DATA_API);
     console.error(error.message, parsed);
     throw error;
   }
@@ -107,7 +108,7 @@ export const initApp = (doc, fetcher = fetch) => {
     if (Object.values(statusCells).some((element) => !element)) {
       return null;
     }
-    const latest = await fetchLatestStatus(fetcher, { signal });
+    const latest = await fetchLatestStatus(doc, fetcher, { signal });
     if (!latest) {
       return null;
     }

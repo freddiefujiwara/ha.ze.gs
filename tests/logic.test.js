@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { ERROR_MESSAGES } from "../src/constants.js";
 import { parseApiCommands } from "../src/logic.js";
+
+vi.mock("../src/notify.js", () => ({
+  notify: vi.fn(),
+}));
 
 describe("parseApiCommands", () => {
   it("returns empty list for missing payloads", () => {
@@ -23,6 +28,7 @@ describe("parseApiCommands", () => {
     expect(errorSpy).toHaveBeenCalledWith("Invalid data-api payload", "invalid");
     errorSpy.mockRestore();
   });
+
 });
 
 import { initApp } from "../src/logic.js";
@@ -67,6 +73,7 @@ describe("initApp", () => {
     };
 
     const mockFetcher = async () => ({
+      ok: true,
       text: async () => "__statusCallback&&__statusCallback({});",
     });
 
