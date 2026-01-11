@@ -100,13 +100,14 @@ export const wireEvents = (doc, fetcher, instance) => {
       event.preventDefault();
       if (link.dataset.url) {
         try {
-          await fetcher(link.dataset.url);
+          const response = await fetcher(link.dataset.url);
+          if (response.ok) {
+            elements.voicetext.value = "";
+          }
         } catch (error) {
           console.error("Failed to send voice command", error);
-          return;
         }
       }
-      elements.voicetext.value = "";
     });
   });
 };
