@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_VOICE_TEXT } from "../src/constants.js";
+import { MAX_ALARM_TEXT } from "../src/constants.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
 
 const buildDocument = () => window.document.implementation.createHTMLDocument("test");
@@ -29,7 +29,7 @@ describe("voice", () => {
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const tooLong = `${MAX_VOICE_TEXT}１`;
+    const tooLong = `${MAX_ALARM_TEXT}１`;
 
     const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
 
@@ -54,7 +54,7 @@ describe("voice", () => {
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const tooLong = `${MAX_VOICE_TEXT}１`;
+    const tooLong = `${MAX_ALARM_TEXT}１`;
 
     updateVoiceLinks("ok", { speak, speakTatami });
 

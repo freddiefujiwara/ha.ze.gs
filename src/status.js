@@ -19,7 +19,7 @@ export const parseLatestPayload = (payload) => {
       });
       return null;
     }
-    const latest = conditions.pop();
+    const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;

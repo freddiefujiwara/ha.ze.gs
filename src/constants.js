@@ -1,9 +1,8 @@
 export const DATA_API_DELAY_MS = 200;
 export const STATUS_INTERVAL_MS = 10 * 60 * 1000;
 export const STATUS_BACKOFF_MS = 60 * 1000;
-const MAX_ALARM_TEXT =
+export const MAX_ALARM_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
-const MAX_VOICE_TEXT = MAX_ALARM_TEXT;
 
 export const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
@@ -25,6 +24,3 @@ export const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS
 export const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 
 export const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
-
-
-export { MAX_ALARM_TEXT, MAX_VOICE_TEXT };
