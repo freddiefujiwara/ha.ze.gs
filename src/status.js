@@ -1,7 +1,4 @@
-const STATUS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
-const STATUS_CALLBACK = "__statusCallback";
-const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
+import { STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
 
 export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 

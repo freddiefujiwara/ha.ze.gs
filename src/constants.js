@@ -5,4 +5,26 @@ const MAX_ALARM_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 const MAX_VOICE_TEXT = MAX_ALARM_TEXT;
 
+export const ALARM_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
+
+export const API_BASE_URL = "http://a.ze.gs";
+
+export const DEVICE_HOSTS = {
+  nest: "192.168.1.22",
+  tatami: "192.168.1.236",
+  tv: "192.168.1.219",
+};
+
+export const STATUS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
+export const STATUS_CALLBACK = "__statusCallback";
+export const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
+
+export const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
+export const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
+
+export const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
+
+
 export { MAX_ALARM_TEXT, MAX_VOICE_TEXT };
