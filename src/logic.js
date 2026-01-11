@@ -8,6 +8,11 @@ const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alar
 
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
+const buildTimeOptions = (count) =>
+  Array.from({ length: count }, (_, index) => {
+    const value = padTime(index);
+    return `<option value="${value}">${value}</option>`;
+  }).join("");
 
 const parseApiCommands = (value) => {
   if (!value) return [];
@@ -46,6 +51,12 @@ export {
 };
 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
+  if (!hourSelect.options.length) {
+    hourSelect.innerHTML = buildTimeOptions(24);
+  }
+  if (!minuteSelect.options.length) {
+    minuteSelect.innerHTML = buildTimeOptions(60);
+  }
   const setIfExists = (select, value) => {
     if (select.querySelector(`option[value="${value}"]`)) {
       select.value = value;

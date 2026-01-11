@@ -118,6 +118,17 @@ describe("app wiring", () => {
     vi.useRealTimers();
   });
 
+  it("builds alarm options when missing", () => {
+    const document = buildDocument();
+    document.getElementById("hour").innerHTML = "";
+    document.getElementById("min").innerHTML = "";
+
+    initApp(document, fetcher);
+
+    expect(document.getElementById("hour").options).toHaveLength(24);
+    expect(document.getElementById("min").options).toHaveLength(60);
+  });
+
   it("executes data-api commands sequentially with delays", async () => {
     vi.useFakeTimers();
     const document = buildDocument();
