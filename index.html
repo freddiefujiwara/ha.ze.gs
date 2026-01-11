@@ -257,7 +257,6 @@ const STATUS_INTERVAL_MS = 10 * 60 * 1000;
 const STATUS_BACKOFF_MS = 60 * 1000;
 const MAX_ALARM_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
-const MAX_VOICE_TEXT = MAX_ALARM_TEXT;
 
 const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
@@ -280,7 +279,7 @@ const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着し
 
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
 
-const apiUrl = (args) => `${API_BASE_URL}/${args.join("/")}`;
+const apiUrl = (args) => `${API_BASE_URL}/${args.map(String).join("/")}`;
 const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
 const replaceHostTokens = (args) =>
   args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
@@ -313,7 +312,7 @@ const parseLatestPayload = (payload) => {
       });
       return null;
     }
-    const latest = conditions.pop();
+    const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;
@@ -382,7 +381,7 @@ const buildVoiceUrls = (voiceText) => {
 };
 
 const updateVoiceLinks = (voiceText, elements) => {
-  if (isTextTooLong(voiceText, MAX_VOICE_TEXT)) {
+  if (isTextTooLong(voiceText, MAX_ALARM_TEXT)) {
     console.error(`Too long text : ${voiceText}`);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
