@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
-import { wireEvents } from "../src/app.js";
+import { scheduleLatestFetch, wireEvents } from "../src/app.js";
 
 const buildOptions = (length) =>
   Array.from({ length }, (_, index) => {
@@ -118,6 +118,17 @@ describe("app wiring", () => {
     vi.useRealTimers();
   });
 
+  it("builds alarm options when missing", () => {
+    const document = buildDocument();
+    document.getElementById("hour").innerHTML = "";
+    document.getElementById("min").innerHTML = "";
+
+    initApp(document, fetcher);
+
+    expect(document.getElementById("hour").options).toHaveLength(24);
+    expect(document.getElementById("min").options).toHaveLength(60);
+  });
+
   it("executes data-api commands sequentially with delays", async () => {
     vi.useFakeTimers();
     const document = buildDocument();
@@ -189,6 +200,57 @@ describe("app bootstrap", () => {
     expect(fetcher).toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it("backs off status polling on failures", async () => {
+    vi.useFakeTimers();
+    const onSchedule = vi.fn();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const stop = scheduleLatestFetch(
+      () => {
+        throw new Error("network");
+      },
+      { onSchedule },
+    );
+
+    expect(onSchedule).toHaveBeenCalledWith(11 * 60 * 1000);
+    expect(errorSpy).toHaveBeenCalledWith("Failed to fetch latest status", expect.any(Error));
+
+    stop();
+    errorSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("keeps interval on abort errors", async () => {
+    vi.useFakeTimers();
+    const onSchedule = vi.fn();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const abortError = new Error("aborted");
+    abortError.name = "AbortError";
+    const stop = scheduleLatestFetch(() => Promise.reject(abortError), { onSchedule });
+
+    await Promise.resolve();
+
+    expect(onSchedule).toHaveBeenCalledWith(10 * 60 * 1000);
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    stop();
+    errorSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("restarts polling after scheduled interval", async () => {
+    vi.useFakeTimers();
+    const fetchLatest = vi.fn().mockResolvedValue(null);
+    const stop = scheduleLatestFetch(fetchLatest);
+
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+
+    expect(fetchLatest).toHaveBeenCalledTimes(2);
+
+    stop();
+    vi.useRealTimers();
   });
 
   it("handles api/fetch links and window api helper", async () => {

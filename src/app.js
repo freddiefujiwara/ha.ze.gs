@@ -20,6 +20,31 @@ export const bindLinkClicks = (doc, selector, handler) => {
 
 const DATA_API_DELAY_MS = 200;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const STATUS_INTERVAL_MS = 10 * 60 * 1000;
+const STATUS_BACKOFF_MS = 60 * 1000;
+
+export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
+  let timerId;
+  let controller;
+  const schedule = (delayMs) => ((timerId = setTimeout(run, delayMs)), onSchedule?.(delayMs));
+  const nextDelay = (error) =>
+    error?.name === "AbortError" ? STATUS_INTERVAL_MS : STATUS_INTERVAL_MS + STATUS_BACKOFF_MS;
+  const run = async () => {
+    controller?.abort();
+    controller = new AbortController();
+    try {
+      await fetchLatest(controller.signal);
+      schedule(STATUS_INTERVAL_MS);
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        console.error("Failed to fetch latest status", error);
+      }
+      schedule(nextDelay(error));
+    }
+  };
+  run();
+  return () => clearTimeout(timerId);
+};
 
 export const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, youtubePlay, elements } = instance;
@@ -92,9 +117,8 @@ export const start = (doc = document, fetcher = fetch) => {
 
   const { fetchLatest } = instance;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
+  scheduleLatestFetch(fetchLatest);
   wireEvents(doc, fetcher, instance);
-  fetchLatest();
-  setInterval(fetchLatest, 10 * 60 * 1000);
 
   return instance;
 };

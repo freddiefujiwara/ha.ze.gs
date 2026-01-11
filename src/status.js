@@ -16,8 +16,9 @@ export const parseLatestPayload = (payload) => {
   return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
 };
 
-export const fetchLatestStatus = async (fetcher) => {
-  const response = await fetcher(buildStatusUrl({ callback: STATUS_CALLBACK }));
+export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
+  const url = buildStatusUrl({ callback: STATUS_CALLBACK });
+  const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
   const payload = await response.text();
   return parseLatestPayload(payload);
 };
