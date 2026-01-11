@@ -6,17 +6,31 @@ const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
 export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
 export const parseLatestPayload = (payload) => {
-  const cleaned = payload
-    .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
-    .replace(/\);$/, "");
+  const trimmed = payload.trim();
+  const stripped = trimmed
+    .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
+    .replace(/\);?\s*$/, "");
+  const cleaned = /^[{[]/.test(trimmed)
+    ? trimmed
+    : stripped.trim();
   try {
     const { conditions, status } = JSON.parse(cleaned);
-    const latest = conditions?.pop?.();
-    if (!latest) return null;
-    const airCondition = status;
-    return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
+    if (!Array.isArray(conditions) || !conditions.length) {
+      console.error("Missing status conditions", {
+        hasConditions: Array.isArray(conditions),
+        length: Array.isArray(conditions) ? conditions.length : null,
+      });
+      return null;
+    }
+    const latest = conditions.pop();
+    return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
-    console.error("Failed to parse status payload", { cleaned, error });
+    const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;
+    console.error("Failed to parse status payload", {
+      cleanedPreview,
+      cleanedLength: cleaned.length,
+      error,
+    });
     return null;
   }
 };
@@ -25,26 +39,33 @@ export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
   const url = buildStatusUrl({ callback: STATUS_CALLBACK });
   const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
   const payload = await response.text();
+  if (!response.ok) {
+    console.error("Failed to fetch status payload", {
+      status: response.status,
+      statusText: response.statusText,
+      preview: payload.slice(0, 200),
+    });
+  }
   return parseLatestPayload(payload);
 };
 
 const formatDateTimeLocal = (value) => {
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  })
-    .format(parsed)
-    .replace(",", "");
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+        .format(parsed)
+        .replace(",", "");
 };
 
 export const updateStatusCells = (latest, elements) => {
+  if (!latest || typeof latest !== "object") return;
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
