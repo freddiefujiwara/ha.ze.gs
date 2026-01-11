@@ -22,7 +22,6 @@ const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =
     }
 
     const dataApi = parseDataAttribute(attrs, "data-api");
-    const dataFetch = parseDataAttribute(attrs, "data-fetch");
     const dataStatusAction = parseDataAttribute(attrs, "data-status-action");
     const dataMessageKey = parseDataAttribute(attrs, "data-message-key");
 
@@ -42,8 +41,6 @@ const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =
       href = apiUrl(buildCarArrivalArgs());
     } else if (dataStatusAction) {
       href = buildStatusUrl({ s: "status", t: dataStatusAction });
-    } else if (dataFetch) {
-      href = dataFetch;
     }
 
     if (!href || !href.startsWith(allowedPrefix)) {
@@ -57,4 +54,4 @@ const rewriteLinksForNoJs = (html, { allowedPrefix = "http://a.ze.gs/" } = {}) =
 export const applyHtmlTransforms = (html, transforms = [rewriteLinksForNoJs]) =>
   transforms.reduce((current, transform) => transform(current), html);
 
-export { rewriteLinksForNoJs };
+export { appendSourceUrl, rewriteLinksForNoJs };
