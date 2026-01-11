@@ -221,6 +221,24 @@ describe("app bootstrap", () => {
     vi.useRealTimers();
   });
 
+  it("keeps interval on abort errors", async () => {
+    vi.useFakeTimers();
+    const onSchedule = vi.fn();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const abortError = new Error("aborted");
+    abortError.name = "AbortError";
+    const stop = scheduleLatestFetch(() => Promise.reject(abortError), { onSchedule });
+
+    await Promise.resolve();
+
+    expect(onSchedule).toHaveBeenCalledWith(10 * 60 * 1000);
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    stop();
+    errorSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
   it("restarts polling after scheduled interval", async () => {
     vi.useFakeTimers();
     const fetchLatest = vi.fn().mockResolvedValue(null);

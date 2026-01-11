@@ -16,6 +16,7 @@ export const parseYouTubeId = (youtubeUrl) => {
       return parsed.pathname.split("/")[1] || "";
     }
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
+      console.error(`Invalid URL: ${youtubeUrl}`);
       return "";
     }
 

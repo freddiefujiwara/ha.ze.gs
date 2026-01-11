@@ -11,8 +11,9 @@ describe("youtube", () => {
     expect(parseYouTubeId("https://www.youtube.com/live/liveid?feature=share")).toBe("liveid");
     expect(parseYouTubeId("https://www.youtube.com/live/")).toBe("");
     expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBe("");
-    expect(parseYouTubeId("https://example.com/watch?v=abc")).toBe("");
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(parseYouTubeId("https://example.com/watch?v=abc")).toBe("");
+    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: https://example.com/watch?v=abc");
     expect(parseYouTubeId("invalid")).toBe("");
     expect(errorSpy).toHaveBeenCalledWith("Invalid URL: invalid");
     expect(parseYouTubeId("view-source:http://ha.ze.gs/")).toBe("");
