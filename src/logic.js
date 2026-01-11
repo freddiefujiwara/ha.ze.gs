@@ -1,19 +1,20 @@
-import { buildAlarmUrl } from "./alarm.js";
+import { buildAlarmUrl, createAlarmController } from "./alarm.js";
 import { DEVICE_HOSTS, ERROR_MESSAGES } from "./constants.js";
 import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
 import { reportError } from "./notify.js";
-import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
-import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
-import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
+import {
+  STATUS_CELL_KEYS,
+  buildStatusUrl,
+  createStatusController,
+  fetchLatestStatus,
+  parseLatestPayload,
+  updateStatusCells,
+} from "./status.js";
+import { buildCarArrivalArgs, buildVoiceUrls, createVoiceController, updateVoiceLinks } from "./voice.js";
+import { buildYouTubePlayUrl, createYouTubeController, parseYouTubeId } from "./youtube.js";
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
-const padTime = (value) => String(value).padStart(2, "0");
-const buildTimeOptions = (count) =>
-  Array.from({ length: count }, (_, index) => {
-    const value = padTime(index);
-    return `<option value="${value}">${value}</option>`;
-  }).join("");
 
 const parseApiCommands = (value) => {
   if (!value) return [];
@@ -51,60 +52,18 @@ export {
   DEVICE_HOSTS,
 };
 
-const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
-
-const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
-  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
-  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
-  setIfExists(hourSelect, padTime(now.getHours()));
-  setIfExists(minuteSelect, padTime(now.getMinutes()));
-};
-
-export const initApp = (doc, fetcher = fetch) => {
+const createAppState = (doc) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
-  if (Object.values(requiredElements).some((element) => !element)) return null;
-
+  const missingRequired = Object.values(requiredElements).some((element) => !element);
+  const missingStatus = Object.values(statusCells).some((element) => !element);
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
-
-  setAlarmDefaults(hour, min);
-
-  voicetext.addEventListener("input", () => {
-    if (!updateVoiceLinks(voicetext.value, { speak, speakTatami })) reportTooLong(doc, voicetext.value);
-  });
-
-  const setAlarm = async () => {
-    const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    if (!alarmUrl) return reportTooLong(doc, alarmtext.value), false;
-    await fetcher(alarmUrl);
-    return true;
-  };
-
-  const youtubePlay = (host) => {
-    if (!youtubeUrl) return null;
-    const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
-    if (!playUrl) {
-      if (youtubeUrl.value) reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-      youtubeUrl.value = "";
-      return null;
-    }
-    return fetcher(playUrl);
-  };
-
-  const fetchLatest = async (signal) => {
-    if (Object.values(statusCells).some((element) => !element)) return null;
-    const latest = await fetchLatestStatus(doc, fetcher, { signal });
-    if (!latest) return null;
-    updateStatusCells(latest, statusCells);
-    return latest;
-  };
-
   return {
-    setAlarm,
-    youtubePlay,
-    fetchLatest,
+    hasRequired: !missingRequired,
+    hasStatus: !missingStatus,
+    requiredElements,
+    statusCells,
     elements: {
       voicetext,
       speak,
@@ -116,5 +75,32 @@ export const initApp = (doc, fetcher = fetch) => {
       youtubeUrl,
       statusCells,
     },
+  };
+};
+
+
+export const initApp = (doc, fetcher = fetch) => {
+  const state = createAppState(doc);
+  if (!state.hasRequired) return null;
+
+  const notifier = { reportError };
+  const alarmController = createAlarmController({ doc, fetcher, notifier, elements: state.elements });
+  const voiceController = createVoiceController({ doc, elements: state.elements, notifier });
+  const youtubeController = createYouTubeController({ doc, fetcher, notifier, elements: state.elements });
+  const statusController = createStatusController({
+    doc,
+    fetcher,
+    statusCells: state.statusCells,
+    hasStatus: state.hasStatus,
+  });
+
+  alarmController.setDefaults();
+  voiceController.bindInput();
+
+  return {
+    setAlarm: alarmController.setAlarm,
+    youtubePlay: youtubeController.youtubePlay,
+    fetchLatest: statusController.fetchLatest,
+    elements: state.elements,
   };
 };
