@@ -117,8 +117,8 @@ export const start = (doc = document, fetcher = fetch) => {
 
   const { fetchLatest } = instance;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
-  wireEvents(doc, fetcher, instance);
   scheduleLatestFetch(fetchLatest);
+  wireEvents(doc, fetcher, instance);
 
   return instance;
 };
