@@ -6,9 +6,10 @@ const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
 export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
 
 export const parseLatestPayload = (payload) => {
-  const cleaned = payload
-    .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
-    .replace(/\);$/, "");
+  const trimmed = payload.trim();
+  const cleaned = trimmed.startsWith("{")
+    ? trimmed
+    : trimmed.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "").replace(/\);$/, "");
   try {
     const { conditions, status } = JSON.parse(cleaned);
     const latest = conditions?.pop?.();
@@ -31,6 +32,9 @@ export const parseLatestPayload = (payload) => {
 export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
   const url = buildStatusUrl({ callback: STATUS_CALLBACK });
   const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
+  if (!response.ok) {
+    console.error("Failed to fetch status payload", { status: response.status, statusText: response.statusText });
+  }
   const payload = await response.text();
   return parseLatestPayload(payload);
 };

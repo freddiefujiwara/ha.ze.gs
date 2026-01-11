@@ -27,6 +27,11 @@ describe("status", () => {
     expect(parseLatestPayload(payload)).toEqual({ Date: "now" });
   });
 
+  it("parses raw json payloads", () => {
+    const payload = "{\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"}";
+    expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
+  });
+
   it("returns null for invalid json", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback(invalid);";
@@ -52,6 +57,9 @@ describe("status", () => {
 
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
       text: vi
         .fn()
         .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}],\"status\":\"on\"});"),
@@ -62,6 +70,25 @@ describe("status", () => {
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?callback=__statusCallback",
     );
+  });
+
+  it("logs when status fetch fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Server Error",
+      text: vi
+        .fn()
+        .mockResolvedValue("__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});"),
+    });
+
+    await expect(fetchLatestStatus(fetcher)).resolves.toEqual({ Date: "now" });
+    expect(errorSpy).toHaveBeenCalledWith("Failed to fetch status payload", {
+      status: 500,
+      statusText: "Server Error",
+    });
+    errorSpy.mockRestore();
   });
 
   it("updates status cells", () => {
