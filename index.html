@@ -316,6 +316,8 @@ const ERROR_MESSAGES = {
   INVALID_DATA_API: "Invalid data-api payload",
   MISSING_CONDITIONS: "Missing status conditions",
   FETCH_PAYLOAD: "Failed to fetch status payload",
+  INVALID_URL: "Invalid URL",
+  TOO_LONG: "Too long text",
 };
 
 const apiUrl = (args) => `${API_BASE_URL}/${args.map(String).join("/")}`;
@@ -325,7 +327,7 @@ const replaceHostTokens = (args) =>
 
 const buildAlarmUrl = (hour, minute, text) => {
   if (isTextTooLong(text, MAX_TEXT)) {
-    console.error(`Too long text : ${text}`);
+    console.error(ERROR_MESSAGES.TOO_LONG, text);
     return null;
   }
   const sanitized = sanitizeText(text);
@@ -424,7 +426,7 @@ const buildVoiceUrls = (voiceText) => {
 
 const updateVoiceLinks = (voiceText, elements) => {
   if (isTextTooLong(voiceText, MAX_TEXT)) {
-    console.error(`Too long text : ${voiceText}`);
+    console.error(ERROR_MESSAGES.TOO_LONG, voiceText);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
     return false;
@@ -447,38 +449,38 @@ const buildCarArrivalArgs = () => [
 
 const parseYouTubeId = (youtubeUrl) => {
   if (!youtubeUrl) {
-    return "";
+    return null;
   }
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      console.error(`Invalid URL: ${youtubeUrl}`);
-      return "";
+      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+      return null;
     }
     if (parsed.hostname === "youtu.be") {
-      return parsed.pathname.split("/")[1] || "";
+      return parsed.pathname.split("/")[1] || null;
     }
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
-      console.error(`Invalid URL: ${youtubeUrl}`);
-      return "";
+      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+      return null;
     }
 
     const handlers = [
       {
         match: () => parsed.pathname === "/watch",
-        getId: () => parsed.searchParams.get("v") || "",
+        getId: () => parsed.searchParams.get("v") || null,
       },
       {
         match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
-        getId: () => parsed.pathname.split("/")[2] || "",
+        getId: () => parsed.pathname.split("/")[2] || null,
       },
     ];
 
     const handler = handlers.find(({ match }) => match());
-    return handler ? handler.getId() : "";
+    return handler ? handler.getId() : null;
   } catch {
-    console.error(`Invalid URL: ${youtubeUrl}`);
-    return "";
+    console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
+    return null;
   }
 };
 
@@ -547,12 +549,16 @@ const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    updateVoiceLinks(voicetext.value, { speak, speakTatami });
+    const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
+    if (!ok) {
+      notify(doc, ERROR_MESSAGES.TOO_LONG);
+    }
   });
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
     if (!alarmUrl) {
+      notify(doc, ERROR_MESSAGES.TOO_LONG);
       return false;
     }
     await fetcher(alarmUrl);
@@ -564,6 +570,9 @@ const initApp = (doc, fetcher = fetch) => {
     }
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
+      if (youtubeUrl.value) {
+        notify(doc, ERROR_MESSAGES.INVALID_URL);
+      }
       youtubeUrl.value = "";
       return null;
     }
@@ -648,6 +657,7 @@ const wireEvents = (doc, fetcher, instance) => {
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
+      notify(doc, ERROR_MESSAGES.INVALID_URL);
       elements.youtubeUrl.value = "";
     }
   });
