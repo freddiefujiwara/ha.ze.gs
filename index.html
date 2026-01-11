@@ -286,11 +286,16 @@ const parseLatestPayload = (payload) => {
   const cleaned = payload
     .replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "")
     .replace(/\);$/, "");
-  const { conditions, status } = JSON.parse(cleaned);
-  const latest = conditions?.pop?.();
-  if (!latest) return null;
-  const airCondition = status;
-  return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
+  try {
+    const { conditions, status } = JSON.parse(cleaned);
+    const latest = conditions?.pop?.();
+    if (!latest) return null;
+    const airCondition = status;
+    return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
+  } catch (error) {
+    console.error("Failed to parse status payload", { cleaned, error });
+    return null;
+  }
 };
 
 const fetchLatestStatus = async (fetcher, { signal } = {}) => {
@@ -317,9 +322,6 @@ const formatDateTimeLocal = (value) => {
 };
 
 const updateStatusCells = (latest, elements) => {
-  if (!latest) {
-    return;
-  }
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
     if (key === "AirCondition") {
@@ -573,7 +575,7 @@ const wireEvents = (doc, fetcher, instance) => {
     }
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
       try {
         const apiCommands = parseApiCommands(link.dataset.api);
@@ -590,9 +592,6 @@ const wireEvents = (doc, fetcher, instance) => {
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
-    }
-    if (link.dataset.fetch) {
-      await fetcher(link.dataset.fetch);
     }
     if (link.dataset.statusAction) {
       await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
