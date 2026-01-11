@@ -9,6 +9,24 @@ const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alar
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
 
+const parseApiCommands = (value) => {
+  if (!value) return [];
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch (error) {
+    console.error("Failed to parse data-api payload", error);
+    throw error;
+  }
+  if (!Array.isArray(parsed)) {
+    const error = new Error("Invalid data-api payload");
+    console.error(error.message, parsed);
+    throw error;
+  }
+  if (!parsed.length) return [];
+  return parsed.every(Array.isArray) ? parsed : [parsed];
+};
+
 export {
   apiUrl,
   buildAlarmUrl,
@@ -17,6 +35,7 @@ export {
   buildStatusUrl,
   buildYouTubePlayUrl,
   fetchLatestStatus,
+  parseApiCommands,
   parseLatestPayload,
   parseYouTubeId,
   replaceHostTokens,

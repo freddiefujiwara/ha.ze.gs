@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { applyHtmlTransforms, rewriteLinksForNoJs } from "../src/build-utils.js";
 
 describe("rewriteLinksForNoJs", () => {
   it("rewrites data-api links to a.ze.gs hrefs", () => {
     const html = `<a href="#" data-api='["hue","lights","off"]'>Off</a>`;
+    const result = rewriteLinksForNoJs(html);
+    expect(result).toContain('href="http://a.ze.gs/hue/lights/off?url=http://ha.ze.gs"');
+  });
+
+  it("uses the first data-api command when multiple are provided", () => {
+    const html = `<a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>Off</a>`;
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain('href="http://a.ze.gs/hue/lights/off?url=http://ha.ze.gs"');
   });
@@ -41,9 +47,12 @@ describe("rewriteLinksForNoJs", () => {
   });
 
   it("keeps invalid data-api payloads unchanged", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const html = `<a href="#" data-api='["hue",]'>Broken</a>`;
     const result = rewriteLinksForNoJs(html);
     expect(result).toContain('href="#"');
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("keeps links without hrefs unchanged", () => {

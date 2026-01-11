@@ -3,6 +3,7 @@ import {
   buildCarArrivalArgs,
   buildStatusUrl,
   initApp,
+  parseApiCommands,
   parseYouTubeId,
   replaceHostTokens,
   resolveHost,
@@ -16,6 +17,9 @@ export const bindLinkClicks = (doc, selector, handler) => {
     });
   });
 };
+
+const DATA_API_DELAY_MS = 200;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, youtubePlay, elements } = instance;
@@ -34,7 +38,18 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
-      await fetcher(apiUrl(replaceHostTokens(JSON.parse(link.dataset.api))));
+      try {
+        const apiCommands = parseApiCommands(link.dataset.api);
+        for (let index = 0; index < apiCommands.length; index += 1) {
+          await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
+          if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
+            await delay(DATA_API_DELAY_MS);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to execute data-api commands", error);
+        return;
+      }
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));

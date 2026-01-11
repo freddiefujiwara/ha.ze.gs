@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
+import { wireEvents } from "../src/app.js";
 
 const buildOptions = (length) =>
   Array.from({ length }, (_, index) => {
@@ -116,6 +117,28 @@ describe("app wiring", () => {
 
     vi.useRealTimers();
   });
+
+  it("executes data-api commands sequentially with delays", async () => {
+    vi.useFakeTimers();
+    const document = buildDocument();
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>`,
+    );
+    const instance = initApp(document, fetcher);
+
+    wireEvents(document, fetcher, instance);
+    document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
+    expect(fetcher).not.toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
+
+    await vi.advanceTimersByTimeAsync(200);
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
+
+    vi.useRealTimers();
+  });
 });
 
 describe("app bootstrap", () => {
@@ -170,6 +193,7 @@ describe("app bootstrap", () => {
 
   it("handles api/fetch links and window api helper", async () => {
     vi.resetModules();
+    vi.useFakeTimers();
     const document = window.document;
     document.body.innerHTML = `
       <textarea id="voicetext"></textarea>
@@ -184,7 +208,8 @@ describe("app bootstrap", () => {
       <div id="Date"></div>
       <div id="Temperature"></div>
       <div id="Humid"></div>
-      <a href="#" data-api='["hue","lights","off"]'>API</a>
+      <a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>
+      <a href="#" data-api='["hue",]'>BrokenAPI</a>
       <a href="#" data-message-key="car-arrival">CarArrives</a>
       <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-status-action="control">Status</a>
@@ -203,24 +228,29 @@ describe("app bootstrap", () => {
     vi.stubGlobal("fetch", fetcher);
     await import("../src/app.js");
 
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-message-key]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-key]").dispatchEvent(new Event("click"));
-    await flushPromises();
+    document.querySelector("a[data-api='[\"hue\",]']").dispatchEvent(new Event("click"));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(200);
 
     window.api(["hue", "lights", "on"]);
     window.setAlarm();
     window.youtubePlay("192.168.1.22");
 
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
     expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
     expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");
+    expect(errorSpy).toHaveBeenCalled();
 
     const youtubeInput = document.getElementById("youtube_url");
     youtubeInput.value = "テスト";
@@ -231,6 +261,8 @@ describe("app bootstrap", () => {
     youtubeInput.dispatchEvent(new Event("blur"));
     expect(youtubeInput.value).toBe("https://youtu.be/abc123");
 
+    errorSpy.mockRestore();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 });
