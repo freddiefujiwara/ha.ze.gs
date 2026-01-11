@@ -1,3 +1,4 @@
+import { DATA_API_DELAY_MS, STATUS_BACKOFF_MS, STATUS_INTERVAL_MS } from "./constants.js";
 import {
   apiUrl,
   buildCarArrivalArgs,
@@ -18,10 +19,7 @@ export const bindLinkClicks = (doc, selector, handler) => {
   });
 };
 
-const DATA_API_DELAY_MS = 200;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const STATUS_INTERVAL_MS = 10 * 60 * 1000;
-const STATUS_BACKOFF_MS = 60 * 1000;
 
 export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
   let timerId;

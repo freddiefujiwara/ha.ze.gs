@@ -100,6 +100,9 @@ export const initApp = (doc, fetcher = fetch) => {
       return null;
     }
     const latest = await fetchLatestStatus(fetcher, { signal });
+    if (!latest) {
+      return null;
+    }
     updateStatusCells(latest, statusCells);
     return latest;
   };
