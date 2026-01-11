@@ -7,9 +7,12 @@ export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSe
 
 export const parseLatestPayload = (payload) => {
   const trimmed = payload.trim();
-  const cleaned = trimmed.startsWith("{")
+  const isJsonLike = trimmed.startsWith("{") || trimmed.startsWith("[");
+  const cleaned = isJsonLike
     ? trimmed
-    : trimmed.replace(new RegExp(`^${STATUS_CALLBACK}&&${STATUS_CALLBACK}\\(`), "").replace(/\);$/, "");
+    : trimmed
+        .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
+        .replace(/\);?\s*$/, "");
   try {
     const { conditions, status } = JSON.parse(cleaned);
     const latest = conditions?.pop?.();
@@ -32,10 +35,14 @@ export const parseLatestPayload = (payload) => {
 export const fetchLatestStatus = async (fetcher, { signal } = {}) => {
   const url = buildStatusUrl({ callback: STATUS_CALLBACK });
   const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
-  if (!response.ok) {
-    console.error("Failed to fetch status payload", { status: response.status, statusText: response.statusText });
-  }
   const payload = await response.text();
+  if (response.ok === false) {
+    console.error("Failed to fetch status payload", {
+      status: response.status,
+      statusText: response.statusText,
+      preview: payload.slice(0, 200),
+    });
+  }
   return parseLatestPayload(payload);
 };
 

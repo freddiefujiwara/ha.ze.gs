@@ -32,6 +32,11 @@ describe("status", () => {
     expect(parseLatestPayload(payload)).toEqual({ Date: "now", AirCondition: "on" });
   });
 
+  it("handles raw json arrays", () => {
+    const payload = "[{\"Date\":\"now\"}]";
+    expect(parseLatestPayload(payload)).toBeNull();
+  });
+
   it("returns null for invalid json", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback(invalid);";
@@ -87,6 +92,7 @@ describe("status", () => {
     expect(errorSpy).toHaveBeenCalledWith("Failed to fetch status payload", {
       status: 500,
       statusText: "Server Error",
+      preview: "__statusCallback&&__statusCallback({\"conditions\":[{\"Date\":\"now\"}]});",
     });
     errorSpy.mockRestore();
   });
