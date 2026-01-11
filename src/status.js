@@ -7,11 +7,12 @@ export const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSe
 
 export const parseLatestPayload = (payload) => {
   const trimmed = payload.trim();
+  const stripped = trimmed
+    .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
+    .replace(/\);?\s*$/, "");
   const cleaned = /^[{[]/.test(trimmed)
     ? trimmed
-    : trimmed
-        .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
-        .replace(/\);?\s*$/, "");
+    : stripped.trim();
   try {
     const { conditions, status } = JSON.parse(cleaned);
     const latest = conditions?.pop?.();
