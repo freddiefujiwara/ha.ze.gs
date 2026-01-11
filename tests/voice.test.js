@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_VOICE_TEXT, buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
+import { MAX_VOICE_TEXT } from "../src/constants.js";
+import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
 
 const buildDocument = () => window.document.implementation.createHTMLDocument("test");
 

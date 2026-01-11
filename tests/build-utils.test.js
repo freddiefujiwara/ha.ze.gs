@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applyHtmlTransforms, rewriteLinksForNoJs } from "../src/build-utils.js";
+import { appendSourceUrl, applyHtmlTransforms, rewriteLinksForNoJs } from "../src/build-utils.js";
 
 describe("rewriteLinksForNoJs", () => {
   it("rewrites data-api links to a.ze.gs hrefs", () => {
@@ -27,25 +27,6 @@ describe("rewriteLinksForNoJs", () => {
     expect(result).toContain("?url=http://ha.ze.gs");
   });
 
-  it("keeps non-a.ze.gs links unchanged", () => {
-    const html = `<a href="#" data-fetch="http://example.com/test">Fetch</a>`;
-    const result = rewriteLinksForNoJs(html);
-    expect(result).toContain('href="#"');
-    expect(result).toContain('data-fetch="http://example.com/test"');
-  });
-
-  it("appends the source url to a.ze.gs data-fetch links", () => {
-    const html = `<a href="#" data-fetch="http://a.ze.gs/path?mode=on">Fetch</a>`;
-    const result = rewriteLinksForNoJs(html);
-    expect(result).toContain('href="http://a.ze.gs/path?mode=on&url=http://ha.ze.gs"');
-  });
-
-  it("avoids adding duplicate source url parameters", () => {
-    const html = `<a href="#" data-fetch="http://a.ze.gs/path?url=http://ha.ze.gs">Fetch</a>`;
-    const result = rewriteLinksForNoJs(html);
-    expect(result).toContain('href="http://a.ze.gs/path?url=http://ha.ze.gs"');
-  });
-
   it("keeps invalid data-api payloads unchanged", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const html = `<a href="#" data-api='["hue",]'>Broken</a>`;
@@ -63,6 +44,21 @@ describe("rewriteLinksForNoJs", () => {
 });
 
 describe("applyHtmlTransforms", () => {
+  it("returns the original href when url is already included", () => {
+    const href = "http://a.ze.gs/path?url=http://ha.ze.gs";
+    expect(appendSourceUrl(href)).toBe(href);
+  });
+
+  it("appends the source url when no query string is present", () => {
+    expect(appendSourceUrl("http://a.ze.gs/path")).toBe("http://a.ze.gs/path?url=http://ha.ze.gs");
+  });
+
+  it("appends the source url using ampersand when a query exists", () => {
+    expect(appendSourceUrl("http://a.ze.gs/path?mode=on")).toBe(
+      "http://a.ze.gs/path?mode=on&url=http://ha.ze.gs",
+    );
+  });
+
   it("applies transforms in order", () => {
     const html = "<p>hello</p>";
     const upper = (value) => value.toUpperCase();

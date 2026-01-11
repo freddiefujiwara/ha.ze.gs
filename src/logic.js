@@ -82,7 +82,14 @@ export const initApp = (doc, fetcher = fetch) => {
     updateVoiceLinks(voicetext.value, { speak, speakTatami });
   });
 
-  const setAlarm = () => fetcher(buildAlarmUrl(hour.value, min.value, alarmtext.value));
+  const setAlarm = async () => {
+    const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
+    if (!alarmUrl) {
+      return false;
+    }
+    await fetcher(alarmUrl);
+    return true;
+  };
   const youtubePlay = (host) => {
     if (!youtubeUrl) {
       return null;

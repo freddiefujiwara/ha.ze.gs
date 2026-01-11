@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MAX_ALARM_TEXT } from "../src/constants.js";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
 import { scheduleLatestFetch, wireEvents } from "../src/app.js";
 
@@ -183,6 +184,11 @@ describe("app bootstrap", () => {
     await flushPromises();
     expect(document.getElementById("alarmtext").value).toBe("");
 
+    document.getElementById("alarmtext").value = `${MAX_ALARM_TEXT}a`;
+    document.getElementById("set").dispatchEvent(new Event("click"));
+    await flushPromises();
+    expect(document.getElementById("alarmtext").value).toBe(`${MAX_ALARM_TEXT}a`);
+
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
 
@@ -279,7 +285,6 @@ describe("app bootstrap", () => {
       <a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>
       <a href="#" data-api='["hue",]'>BrokenAPI</a>
       <a href="#" data-message-key="car-arrival">CarArrives</a>
-      <a href="#" data-fetch="http://example.com/fetch">Fetch</a>
       <a href="#" data-status-action="control">Status</a>
       <a href="#" data-youtube-host="">NoHost</a>
       <a href="#" data-youtube-key="nest">YoutubeKey</a>
@@ -299,7 +304,6 @@ describe("app bootstrap", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-message-key]").dispatchEvent(new Event("click"));
-    document.querySelector("a[data-fetch]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-status-action]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
     document.querySelector("a[data-youtube-key]").dispatchEvent(new Event("click"));

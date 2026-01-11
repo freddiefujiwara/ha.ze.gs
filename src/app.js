@@ -49,8 +49,10 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    await setAlarm();
-    elements.alarmtext.value = "";
+    const didSet = await setAlarm();
+    if (didSet) {
+      elements.alarmtext.value = "";
+    }
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
