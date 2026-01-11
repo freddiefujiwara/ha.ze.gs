@@ -15,7 +15,14 @@ export const parseLatestPayload = (payload) => {
     : stripped.trim();
   try {
     const { conditions, status } = JSON.parse(cleaned);
-    const latest = conditions?.pop?.();
+    if (!Array.isArray(conditions) || !conditions.length) {
+      console.error("Missing status conditions", {
+        hasConditions: Array.isArray(conditions),
+        length: Array.isArray(conditions) ? conditions.length : null,
+      });
+      return null;
+    }
+    const latest = conditions.pop();
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
     const cleanedPreview = cleaned.length > 200 ? `${cleaned.slice(0, 200)}…` : cleaned;

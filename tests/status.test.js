@@ -13,13 +13,36 @@ describe("status", () => {
   });
 
   it("returns null for non-array payloads", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback({\"conditions\":{\"Date\":\"now\"}});";
     expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+      hasConditions: false,
+      length: null,
+    });
+    errorSpy.mockRestore();
   });
 
   it("returns null for missing conditions", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const payload = "__statusCallback&&__statusCallback({\"Date\":\"now\"});";
     expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+      hasConditions: false,
+      length: null,
+    });
+    errorSpy.mockRestore();
+  });
+
+  it("logs when conditions are empty", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const payload = "__statusCallback&&__statusCallback({\"conditions\":[]});";
+    expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith("Missing status conditions", {
+      hasConditions: true,
+      length: 0,
+    });
+    errorSpy.mockRestore();
   });
 
   it("keeps latest data when status missing", () => {
@@ -34,6 +57,11 @@ describe("status", () => {
 
   it("handles raw json arrays", () => {
     const payload = "[{\"Date\":\"now\"}]";
+    expect(parseLatestPayload(payload)).toBeNull();
+  });
+
+  it("returns null when latest is empty", () => {
+    const payload = "__statusCallback&&__statusCallback({\"conditions\":[null]});";
     expect(parseLatestPayload(payload)).toBeNull();
   });
 

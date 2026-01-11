@@ -1,12 +1,13 @@
 import { API_BASE_URL_VALUE, DEVICE_HOSTS } from "./hosts.js";
-import { sanitizeText } from "./text.js";
+import { normalizeText, sanitizeText } from "./text.js";
 
 const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
 const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 export const MAX_VOICE_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_VOICE_TEXT).length;
-const isVoiceTextTooLong = (voiceText) => sanitizeText(voiceText).length > MAX_ENCODED_LENGTH;
+const isVoiceTextTooLong = (voiceText) =>
+  encodeURIComponent(normalizeText(voiceText)).length > MAX_ENCODED_LENGTH;
 
 export const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
