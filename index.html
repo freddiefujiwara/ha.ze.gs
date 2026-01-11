@@ -248,6 +248,9 @@ textarea {
 
     <script>const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
 const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
+const getMaxEncodedLength = (maxText) => encodeURIComponent(normalizeText(maxText)).length;
+const isTextTooLong = (value, maxText) =>
+  encodeURIComponent(normalizeText(value)).length > getMaxEncodedLength(maxText);
 
 const DATA_API_DELAY_MS = 200;
 const STATUS_INTERVAL_MS = 10 * 60 * 1000;
@@ -273,12 +276,8 @@ const API_BASE_URL_VALUE = API_BASE_URL;
 const ALARM_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
 
-const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_ALARM_TEXT).length;
-const isAlarmTextTooLong = (alarmText) =>
-  encodeURIComponent(normalizeText(alarmText)).length > MAX_ENCODED_LENGTH;
-
 const buildAlarmUrl = (hour, minute, text) => {
-  if (isAlarmTextTooLong(text)) {
+  if (isTextTooLong(text, MAX_ALARM_TEXT)) {
     console.error(`Too long text : ${text}`);
     return null;
   }
@@ -372,10 +371,6 @@ const STATUS_CELL_KEYS = STATUS_KEYS;
 
 const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
 const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
-const MAX_ENCODED_LENGTH = encodeURIComponent(MAX_VOICE_TEXT).length;
-const isVoiceTextTooLong = (voiceText) =>
-  encodeURIComponent(normalizeText(voiceText)).length > MAX_ENCODED_LENGTH;
-
 const buildVoiceUrls = (voiceText) => {
   const sanitized = sanitizeText(voiceText);
   return {
@@ -385,7 +380,7 @@ const buildVoiceUrls = (voiceText) => {
 };
 
 const updateVoiceLinks = (voiceText, elements) => {
-  if (isVoiceTextTooLong(voiceText)) {
+  if (isTextTooLong(voiceText, MAX_VOICE_TEXT)) {
     console.error(`Too long text : ${voiceText}`);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
