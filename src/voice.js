@@ -22,6 +22,8 @@ export const updateVoiceLinks = (voiceText, elements) => {
     if (elements.voicetext) {
       elements.voicetext.value = "";
     }
+    elements.speak.removeAttribute("data-url");
+    elements.speakTatami.removeAttribute("data-url");
     return false;
   }
   const { speak, speakTatami } = buildVoiceUrls(voiceText);

@@ -53,4 +53,23 @@ describe("voice", () => {
     expect(args.join("/")).toContain("google-home-speaker-wrapper");
     expect(args.join("/")).toContain("192.168.1.22");
   });
+
+  it("clears previous voice urls when text is too long", () => {
+    const document = buildDocument();
+    const speak = document.createElement("a");
+    const speakTatami = document.createElement("a");
+    const voicetext = document.createElement("textarea");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const tooLong = `${MAX_VOICE_TEXT}１`;
+
+    updateVoiceLinks("ok", { speak, speakTatami, voicetext });
+
+    const updated = updateVoiceLinks(tooLong, { speak, speakTatami, voicetext });
+
+    expect(updated).toBe(false);
+    expect(speak.dataset.url).toBeUndefined();
+    expect(speakTatami.dataset.url).toBeUndefined();
+
+    errorSpy.mockRestore();
+  });
 });
