@@ -59,6 +59,7 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
+      console.error(ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
       notify(doc, ERROR_MESSAGES.INVALID_URL);
       elements.youtubeUrl.value = "";
     }

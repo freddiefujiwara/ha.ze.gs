@@ -3,7 +3,6 @@ import { isTextTooLong, sanitizeText } from "./text.js";
 
 export const buildAlarmUrl = (hour, minute, text) => {
   if (isTextTooLong(text, MAX_TEXT)) {
-    console.error(ERROR_MESSAGES.TOO_LONG, text);
     return null;
   }
   const sanitized = sanitizeText(text);

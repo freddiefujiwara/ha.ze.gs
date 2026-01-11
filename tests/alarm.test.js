@@ -9,11 +9,8 @@ describe("alarm", () => {
     );
   });
 
-  it("returns null and logs when alarm text is too long", () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("returns null when text is too long", () => {
     const tooLong = `${MAX_TEXT}a`;
     expect(buildAlarmUrl("07", "30", tooLong)).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.TOO_LONG, tooLong);
-    errorSpy.mockRestore();
   });
 });

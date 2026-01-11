@@ -91,7 +91,7 @@ describe("initApp", () => {
     expect(latest).toBeNull();
   });
 
-  it("notifies when youtube url is invalid", async () => {
+  it("notifies and logs when youtube url is invalid", async () => {
     const doc = {
       getElementById: () => ({
         addEventListener: () => {},
@@ -102,12 +102,15 @@ describe("initApp", () => {
       querySelectorAll: () => [],
     };
     const { notify } = await import("../src/notify.js");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const instance = initApp(doc, fetch);
     instance.youtubePlay("host");
     expect(notify).toHaveBeenCalledWith(doc, ERROR_MESSAGES.INVALID_URL);
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.INVALID_URL, "invalid-url");
+    errorSpy.mockRestore();
   });
 
-  it.skip("notifies when alarm text is too long", async () => {
+  it.skip("notifies and logs when alarm text is too long", async () => {
     const elements = {
       voicetext: { addEventListener: vi.fn(), value: "" },
       speak: { addEventListener: vi.fn() },
@@ -127,8 +130,11 @@ describe("initApp", () => {
       querySelectorAll: () => [],
     };
     const { notify } = await import("../src/notify.js");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const instance = initApp(doc, fetch);
     await instance.setAlarm();
     expect(notify).toHaveBeenCalledWith(doc, ERROR_MESSAGES.TOO_LONG);
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.TOO_LONG, "a".repeat(200));
+    errorSpy.mockRestore();
   });
 });

@@ -11,14 +11,9 @@ describe("youtube", () => {
     expect(parseYouTubeId("https://www.youtube.com/live/liveid?feature=share")).toBe("liveid");
     expect(parseYouTubeId("https://www.youtube.com/live/")).toBeNull();
     expect(parseYouTubeId("https://www.youtube.com/playlist?list=abc")).toBeNull();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(parseYouTubeId("https://example.com/watch?v=abc")).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL", "https://example.com/watch?v=abc");
     expect(parseYouTubeId("invalid")).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL", "invalid");
     expect(parseYouTubeId("view-source:http://ha.ze.gs/")).toBeNull();
-    expect(errorSpy).toHaveBeenCalledWith("Invalid URL", "view-source:http://ha.ze.gs/");
-    errorSpy.mockRestore();
   });
 
   it("builds youtube play url", () => {

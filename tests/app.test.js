@@ -183,7 +183,8 @@ describe("app wiring", () => {
   it("notifies on network failure", async () => {
     const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
     const document = buildDocument();
-    const failingFetcher = vi.fn().mockRejectedValue(new Error("network"));
+    const error = new Error("network");
+    const failingFetcher = vi.fn().mockRejectedValue(error);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const instance = initApp(document, failingFetcher);
     const { notify } = await import("../src/notify.js");
@@ -195,6 +196,7 @@ describe("app wiring", () => {
     await flushPromises();
 
     expect(notify).toHaveBeenCalledWith(document, ERROR_MESSAGES.SEND_VOICE);
+    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.SEND_VOICE, error);
     errorSpy.mockRestore();
   });
 });

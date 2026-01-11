@@ -7,14 +7,12 @@ export const parseYouTubeId = (youtubeUrl) => {
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
       return null;
     }
     if (parsed.hostname === "youtu.be") {
       return parsed.pathname.split("/")[1] || null;
     }
     if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
-      console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
       return null;
     }
 
@@ -32,7 +30,6 @@ export const parseYouTubeId = (youtubeUrl) => {
     const handler = handlers.find(({ match }) => match());
     return handler ? handler.getId() : null;
   } catch {
-    console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl);
     return null;
   }
 };

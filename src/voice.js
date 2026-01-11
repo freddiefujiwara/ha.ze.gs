@@ -11,7 +11,6 @@ export const buildVoiceUrls = (voiceText) => {
 
 export const updateVoiceLinks = (voiceText, elements) => {
   if (isTextTooLong(voiceText, MAX_TEXT)) {
-    console.error(ERROR_MESSAGES.TOO_LONG, voiceText);
     elements.speak.removeAttribute("data-url");
     elements.speakTatami.removeAttribute("data-url");
     return false;
