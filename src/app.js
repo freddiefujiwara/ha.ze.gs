@@ -103,8 +103,8 @@ export const wireEvents = (doc, fetcher, instance) => {
       event.preventDefault();
       if (link.dataset.url) {
         await fetcher(link.dataset.url);
-        elements.voicetext.value = "";
       }
+      elements.voicetext.value = "";
     });
   });
 };

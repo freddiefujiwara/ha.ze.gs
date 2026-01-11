@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
+import { describe, expect, it, vi } from "vitest";
+import { MAX_VOICE_TEXT, buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "../src/voice.js";
 
 const buildDocument = () => window.document.implementation.createHTMLDocument("test");
 
@@ -16,15 +16,53 @@ describe("voice", () => {
     const speak = document.createElement("a");
     const speakTatami = document.createElement("a");
 
-    updateVoiceLinks("test", { speak, speakTatami });
+    const updated = updateVoiceLinks("test", { speak, speakTatami });
 
+    expect(updated).toBe(true);
     expect(speak.dataset.url).toContain("-s/test");
     expect(speakTatami.dataset.url).toContain("-s/test");
+  });
+
+  it("logs when text is too long", () => {
+    const document = buildDocument();
+    const speak = document.createElement("a");
+    const speakTatami = document.createElement("a");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const tooLong = `${MAX_VOICE_TEXT}１`;
+
+    const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
+
+    expect(updated).toBe(false);
+    expect(errorSpy).toHaveBeenCalledWith(`Too long text : ${tooLong}`);
+    expect(speak.dataset.url).toBeUndefined();
+    expect(speakTatami.dataset.url).toBeUndefined();
+    expect(speak.getAttribute("href")).toBeNull();
+    expect(speakTatami.getAttribute("href")).toBeNull();
+
+    errorSpy.mockRestore();
   });
 
   it("builds car arrival args", () => {
     const args = buildCarArrivalArgs();
     expect(args.join("/")).toContain("google-home-speaker-wrapper");
     expect(args.join("/")).toContain("192.168.1.22");
+  });
+
+  it("clears previous voice urls when text is too long", () => {
+    const document = buildDocument();
+    const speak = document.createElement("a");
+    const speakTatami = document.createElement("a");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const tooLong = `${MAX_VOICE_TEXT}１`;
+
+    updateVoiceLinks("ok", { speak, speakTatami });
+
+    const updated = updateVoiceLinks(tooLong, { speak, speakTatami });
+
+    expect(updated).toBe(false);
+    expect(speak.dataset.url).toBeUndefined();
+    expect(speakTatami.dataset.url).toBeUndefined();
+
+    errorSpy.mockRestore();
   });
 });
