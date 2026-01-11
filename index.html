@@ -273,11 +273,24 @@ textarea {
       </tbody>
     </table>
 
-    <script>const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
-const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
-const getMaxEncodedLength = (maxText) => encodeURIComponent(normalizeText(maxText)).length;
-const isTextTooLong = (value, maxText) =>
-  encodeURIComponent(normalizeText(value)).length > getMaxEncodedLength(maxText);
+    <script>const createTextUtils = () => {
+  const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
+  const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
+  const getMaxEncodedLength = (maxText) => encodeURIComponent(normalizeText(maxText)).length;
+  const isTextTooLong = (value, maxText) =>
+    encodeURIComponent(normalizeText(value)).length > getMaxEncodedLength(maxText);
+
+  return {
+    normalizeText,
+    sanitizeText,
+    getMaxEncodedLength,
+    isTextTooLong,
+  };
+};
+
+const defaultTextUtils = createTextUtils();
+
+const { normalizeText, sanitizeText, getMaxEncodedLength, isTextTooLong } = defaultTextUtils;
 
 const DATA_API_DELAY_MS = 200;
 const NOTIFY_DEBOUNCE_MS = 2 * 1000;
@@ -320,10 +333,22 @@ const ERROR_MESSAGES = {
   TOO_LONG: "Too long text",
 };
 
-const apiUrl = (args) => `${API_BASE_URL}/${args.map(String).join("/")}`;
-const resolveHost = (value) => DEVICE_HOSTS[value] ?? value;
-const replaceHostTokens = (args) =>
-  args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
+const createHostResolver = ({ apiBaseUrl = API_BASE_URL, deviceHosts = DEVICE_HOSTS } = {}) => {
+  const apiUrl = (args) => `${apiBaseUrl}/${args.map(String).join("/")}`;
+  const resolveHost = (value) => deviceHosts[value] ?? value;
+  const replaceHostTokens = (args) =>
+    args.map((arg) => (typeof arg === "string" && arg.startsWith("host:") ? resolveHost(arg.slice(5)) : arg));
+
+  return {
+    apiUrl,
+    resolveHost,
+    replaceHostTokens,
+  };
+};
+
+const defaultResolver = createHostResolver();
+
+const { apiUrl, resolveHost, replaceHostTokens } = defaultResolver;
 
 const DEFAULT_OPTIONS = {
   containerId: "notification-container",
@@ -383,175 +408,303 @@ const buildAlarmUrl = (hour, minute, text) => {
   return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
 
-const buildStatusUrl = (params = {}) => `${STATUS_SCRIPT_URL}?${new URLSearchParams(params)}`;
-
-const stripStatusCallback = (value) =>
-  value
-    .replace(new RegExp(`^${STATUS_CALLBACK}(?:&&${STATUS_CALLBACK})?\\(`), "")
-    .replace(/\);?\s*$/, "");
-
-const normalizePayload = (payload) => {
-  const trimmed = payload.trim();
-  if (!trimmed) return "";
-  return /^[{[]/.test(trimmed) ? trimmed : stripStatusCallback(trimmed).trim();
-};
-
-const parseConditions = (doc, payload) => {
-  try {
-    const { conditions, status } = JSON.parse(payload);
-    if (!Array.isArray(conditions) || !conditions.length) {
-      reportError(doc, ERROR_MESSAGES.MISSING_CONDITIONS, {
-        hasConditions: Array.isArray(conditions),
-        length: Array.isArray(conditions) ? conditions.length : null,
-      });
-      return null;
-    }
-    const latest = conditions.at(-1);
-    return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
-  } catch (error) {
-    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
-      cleanedPreview: payload.length > 200 ? `${payload.slice(0, 200)}…` : payload,
-      cleanedLength: payload.length,
-      error,
-    });
-    return null;
-  }
-};
-
-const parseLatestPayload = (doc, payload) => {
-  const cleaned = normalizePayload(payload);
-  if (!cleaned) {
-    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
-      cleanedPreview: "",
-      cleanedLength: 0,
-      error: new Error("Empty payload"),
-    });
-    return null;
-  }
-  return parseConditions(doc, cleaned);
-};
-
-const fetchLatestStatus = async (doc, fetcher, { signal } = {}) => {
-  const url = buildStatusUrl({ callback: STATUS_CALLBACK });
-  const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
-  const payload = await response.text();
-  if (!response.ok) {
-    reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
-      status: response.status,
-      statusText: response.statusText,
-      preview: payload.slice(0, 200),
-    });
-  }
-  return parseLatestPayload(doc, payload);
-};
-
-const formatDateTimeLocal = (value) => {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? value
-    : new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-        .format(parsed)
-        .replace(",", "");
-};
-
-const updateStatusCells = (latest, elements) => {
-  if (!latest || typeof latest !== "object") return;
-  STATUS_KEYS.forEach((key) => {
-    const value = latest[key];
-    if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : String(value));
-    if (key === "Date") return void (elements[key].innerText = formatDateTimeLocal(value));
-    elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
-  });
-};
-
-const STATUS_CELL_KEYS = STATUS_KEYS;
-
-const buildVoiceUrls = (voiceText) => {
-  const sanitized = sanitizeText(voiceText);
-  return {
-    speak: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speak}/-v/60/-s/${sanitized}`,
-    speakTatami: `${API_BASE_URL}/google-home-speaker-wrapper/-h/${VOICE_HOSTS.speakTatami}/-v/60/-s/${sanitized}`,
-  };
-};
-
-const updateVoiceLinks = (voiceText, elements) => {
-  if (isTextTooLong(voiceText, MAX_TEXT)) {
-    elements.speak.removeAttribute("data-url");
-    elements.speakTatami.removeAttribute("data-url");
-    return false;
-  }
-  const { speak, speakTatami } = buildVoiceUrls(voiceText);
-  elements.speak.dataset.url = speak;
-  elements.speakTatami.dataset.url = speakTatami;
-  return true;
-};
-
-const buildCarArrivalArgs = () => [
-  "google-home-speaker-wrapper",
-  "-h",
-  DEVICE_HOSTS.nest,
-  "-v",
-  60,
-  "-s",
-  sanitizeText(CAR_ARRIVAL_MESSAGE),
-];
-
-const parseYouTubeId = (youtubeUrl) => {
-  if (!youtubeUrl) {
-    return null;
-  }
-  try {
-    const parsed = new URL(youtubeUrl);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return null;
-    }
-    if (parsed.hostname === "youtu.be") {
-      return parsed.pathname.split("/")[1] || null;
-    }
-    if (!YOUTUBE_HOSTS.has(parsed.hostname)) {
-      return null;
-    }
-
-    const handlers = [
-      {
-        match: () => parsed.pathname === "/watch",
-        getId: () => parsed.searchParams.get("v") || null,
-      },
-      {
-        match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
-        getId: () => parsed.pathname.split("/")[2] || null,
-      },
-    ];
-
-    const handler = handlers.find(({ match }) => match());
-    return handler ? handler.getId() : null;
-  } catch {
-    return null;
-  }
-};
-
-const buildYouTubePlayUrl = (host, youtubeUrl) => {
-  const videoId = parseYouTubeId(youtubeUrl);
-  if (!videoId) {
-    return null;
-  }
-  return `${API_BASE_URL}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
-};
-
-const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
 const buildTimeOptions = (count) =>
   Array.from({ length: count }, (_, index) => {
     const value = padTime(index);
     return `<option value="${value}">${value}</option>`;
   }).join("");
+
+const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
+  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
+  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
+  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
+  setIfExists(hourSelect, padTime(now.getHours()));
+  setIfExists(minuteSelect, padTime(now.getMinutes()));
+};
+
+const createAlarmController = ({
+  doc,
+  fetcher,
+  notifier,
+  elements,
+  buildAlarmUrl: buildAlarmUrlFn = buildAlarmUrl,
+} = {}) => {
+  const setDefaults = () => setAlarmDefaults(elements.hour, elements.min);
+  const setAlarm = async () => {
+    const alarmUrl = buildAlarmUrlFn(elements.hour.value, elements.min.value, elements.alarmtext.value);
+    if (!alarmUrl) {
+      notifier?.reportError?.(doc, ERROR_MESSAGES.TOO_LONG, elements.alarmtext.value);
+      return false;
+    }
+    await fetcher(alarmUrl);
+    return true;
+  };
+  return { setDefaults, setAlarm };
+};
+
+const createStatusService = ({
+  statusScriptUrl = STATUS_SCRIPT_URL,
+  statusCallback = STATUS_CALLBACK,
+  statusKeys = STATUS_KEYS,
+  reportError: reportErrorFn = reportError,
+} = {}) => {
+  const buildStatusUrl = (params = {}) => `${statusScriptUrl}?${new URLSearchParams(params)}`;
+
+  const stripStatusCallback = (value) =>
+    value
+      .replace(new RegExp(`^${statusCallback}(?:&&${statusCallback})?\\(`), "")
+      .replace(/\);?\s*$/, "");
+
+  const normalizePayload = (payload) => {
+    const trimmed = payload.trim();
+    if (!trimmed) return "";
+    return /^[{[]/.test(trimmed) ? trimmed : stripStatusCallback(trimmed).trim();
+  };
+
+  const parseConditions = (doc, payload) => {
+    try {
+      const { conditions, status } = JSON.parse(payload);
+      if (!Array.isArray(conditions) || !conditions.length) {
+        reportErrorFn(doc, ERROR_MESSAGES.MISSING_CONDITIONS, {
+          hasConditions: Array.isArray(conditions),
+          length: Array.isArray(conditions) ? conditions.length : null,
+        });
+        return null;
+      }
+      const latest = conditions.at(-1);
+      return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
+    } catch (error) {
+      reportErrorFn(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
+        cleanedPreview: payload.length > 200 ? `${payload.slice(0, 200)}…` : payload,
+        cleanedLength: payload.length,
+        error,
+      });
+      return null;
+    }
+  };
+
+  const parseLatestPayload = (doc, payload) => {
+    const cleaned = normalizePayload(payload);
+    if (!cleaned) {
+      reportErrorFn(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
+        cleanedPreview: "",
+        cleanedLength: 0,
+        error: new Error("Empty payload"),
+      });
+      return null;
+    }
+    return parseConditions(doc, cleaned);
+  };
+
+  const fetchLatestStatus = async (doc, fetcher, { signal } = {}) => {
+    const url = buildStatusUrl({ callback: statusCallback });
+    const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
+    const payload = await response.text();
+    if (!response.ok) {
+      reportErrorFn(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
+        status: response.status,
+        statusText: response.statusText,
+        preview: payload.slice(0, 200),
+      });
+    }
+    return parseLatestPayload(doc, payload);
+  };
+
+  const formatDateTimeLocal = (value) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? value
+      : new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+          .format(parsed)
+          .replace(",", "");
+  };
+
+  const updateStatusCells = (latest, elements) => {
+    if (!latest || typeof latest !== "object") return;
+    statusKeys.forEach((key) => {
+      const value = latest[key];
+      if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : String(value));
+      if (key === "Date") return void (elements[key].innerText = formatDateTimeLocal(value));
+      elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
+    });
+  };
+
+  return {
+    buildStatusUrl,
+    parseLatestPayload,
+    fetchLatestStatus,
+    updateStatusCells,
+    statusCellKeys: statusKeys,
+  };
+};
+
+const defaultStatusService = createStatusService();
+
+const { buildStatusUrl, parseLatestPayload, fetchLatestStatus, updateStatusCells } = defaultStatusService;
+
+const createStatusController = ({
+  doc,
+  fetcher,
+  statusCells,
+  hasStatus = true,
+  statusService = defaultStatusService,
+} = {}) => {
+  const fetchLatest = async (signal) => {
+    if (!hasStatus) return null;
+    const latest = await statusService.fetchLatestStatus(doc, fetcher, { signal });
+    if (!latest) return null;
+    statusService.updateStatusCells(latest, statusCells);
+    return latest;
+  };
+  return { fetchLatest };
+};
+
+const STATUS_CELL_KEYS = STATUS_KEYS;
+
+const createVoiceService = ({
+  apiBaseUrl = API_BASE_URL,
+  voiceHosts = VOICE_HOSTS,
+  deviceHosts = DEVICE_HOSTS,
+  maxText = MAX_TEXT,
+  textUtils = createTextUtils(),
+} = {}) => {
+  const { sanitizeText, isTextTooLong } = textUtils;
+
+  const buildVoiceUrls = (voiceText) => {
+    const sanitized = sanitizeText(voiceText);
+    return {
+      speak: `${apiBaseUrl}/google-home-speaker-wrapper/-h/${voiceHosts.speak}/-v/60/-s/${sanitized}`,
+      speakTatami: `${apiBaseUrl}/google-home-speaker-wrapper/-h/${voiceHosts.speakTatami}/-v/60/-s/${sanitized}`,
+    };
+  };
+
+  const updateVoiceLinks = (voiceText, elements) => {
+    if (isTextTooLong(voiceText, maxText)) {
+      elements.speak.removeAttribute("data-url");
+      elements.speakTatami.removeAttribute("data-url");
+      return false;
+    }
+    const { speak, speakTatami } = buildVoiceUrls(voiceText);
+    elements.speak.dataset.url = speak;
+    elements.speakTatami.dataset.url = speakTatami;
+    return true;
+  };
+
+  const buildCarArrivalArgs = () => [
+    "google-home-speaker-wrapper",
+    "-h",
+    deviceHosts.nest,
+    "-v",
+    60,
+    "-s",
+    sanitizeText(CAR_ARRIVAL_MESSAGE),
+  ];
+
+  return {
+    buildVoiceUrls,
+    updateVoiceLinks,
+    buildCarArrivalArgs,
+  };
+};
+
+const defaultVoiceService = createVoiceService();
+
+const { buildVoiceUrls, updateVoiceLinks, buildCarArrivalArgs } = defaultVoiceService;
+
+const createVoiceController = ({ doc, elements, notifier, updateVoiceLinks: updateVoiceLinksFn = updateVoiceLinks } = {}) => {
+  const bindInput = () => {
+    elements.voicetext.addEventListener("input", () => {
+      if (!updateVoiceLinksFn(elements.voicetext.value, { speak: elements.speak, speakTatami: elements.speakTatami })) {
+        notifier?.reportError?.(doc, ERROR_MESSAGES.TOO_LONG, elements.voicetext.value);
+      }
+    });
+  };
+  return { bindInput };
+};
+
+const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts = YOUTUBE_HOSTS } = {}) => {
+  const parseYouTubeId = (youtubeUrl) => {
+    if (!youtubeUrl) {
+      return null;
+    }
+    try {
+      const parsed = new URL(youtubeUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return null;
+      }
+      if (parsed.hostname === "youtu.be") {
+        return parsed.pathname.split("/")[1] || null;
+      }
+      if (!youtubeHosts.has(parsed.hostname)) {
+        return null;
+      }
+
+      const handlers = [
+        {
+          match: () => parsed.pathname === "/watch",
+          getId: () => parsed.searchParams.get("v") || null,
+        },
+        {
+          match: () => parsed.pathname.startsWith("/live/") || parsed.pathname.startsWith("/shorts/"),
+          getId: () => parsed.pathname.split("/")[2] || null,
+        },
+      ];
+
+      const handler = handlers.find(({ match }) => match());
+      return handler ? handler.getId() : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const buildYouTubePlayUrl = (host, youtubeUrl) => {
+    const videoId = parseYouTubeId(youtubeUrl);
+    if (!videoId) {
+      return null;
+    }
+    return `${apiBaseUrl}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+  };
+
+  return {
+    parseYouTubeId,
+    buildYouTubePlayUrl,
+  };
+};
+
+const defaultYouTubeService = createYouTubeService();
+
+const { parseYouTubeId, buildYouTubePlayUrl } = defaultYouTubeService;
+
+const createYouTubeController = ({
+  doc,
+  fetcher,
+  notifier,
+  elements,
+  buildYouTubePlayUrl: buildYouTubePlayUrlFn = buildYouTubePlayUrl,
+} = {}) => {
+  const youtubePlay = (host) => {
+    const { youtubeUrl } = elements;
+    if (!youtubeUrl) return null;
+    const playUrl = buildYouTubePlayUrlFn(host, youtubeUrl.value);
+    if (!playUrl) {
+      if (youtubeUrl.value) notifier?.reportError?.(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
+      youtubeUrl.value = "";
+      return null;
+    }
+    return fetcher(playUrl);
+  };
+  return { youtubePlay };
+};
+
+const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
 const parseApiCommands = (value) => {
   if (!value) return [];
@@ -571,60 +724,18 @@ const parseApiCommands = (value) => {
   return parsed.every(Array.isArray) ? parsed : [parsed];
 };
 
-const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
-
-const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
-  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
-  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
-  setIfExists(hourSelect, padTime(now.getHours()));
-  setIfExists(minuteSelect, padTime(now.getMinutes()));
-};
-
-const initApp = (doc, fetcher = fetch) => {
+const createAppState = (doc) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
-  if (Object.values(requiredElements).some((element) => !element)) return null;
-
+  const missingRequired = Object.values(requiredElements).some((element) => !element);
+  const missingStatus = Object.values(statusCells).some((element) => !element);
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
-
-  setAlarmDefaults(hour, min);
-
-  voicetext.addEventListener("input", () => {
-    if (!updateVoiceLinks(voicetext.value, { speak, speakTatami })) reportTooLong(doc, voicetext.value);
-  });
-
-  const setAlarm = async () => {
-    const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    if (!alarmUrl) return reportTooLong(doc, alarmtext.value), false;
-    await fetcher(alarmUrl);
-    return true;
-  };
-
-  const youtubePlay = (host) => {
-    if (!youtubeUrl) return null;
-    const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
-    if (!playUrl) {
-      if (youtubeUrl.value) reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-      youtubeUrl.value = "";
-      return null;
-    }
-    return fetcher(playUrl);
-  };
-
-  const fetchLatest = async (signal) => {
-    if (Object.values(statusCells).some((element) => !element)) return null;
-    const latest = await fetchLatestStatus(doc, fetcher, { signal });
-    if (!latest) return null;
-    updateStatusCells(latest, statusCells);
-    return latest;
-  };
-
   return {
-    setAlarm,
-    youtubePlay,
-    fetchLatest,
+    hasRequired: !missingRequired,
+    hasStatus: !missingStatus,
+    requiredElements,
+    statusCells,
     elements: {
       voicetext,
       speak,
@@ -636,6 +747,33 @@ const initApp = (doc, fetcher = fetch) => {
       youtubeUrl,
       statusCells,
     },
+  };
+};
+
+
+const initApp = (doc, fetcher = fetch) => {
+  const state = createAppState(doc);
+  if (!state.hasRequired) return null;
+
+  const notifier = { reportError };
+  const alarmController = createAlarmController({ doc, fetcher, notifier, elements: state.elements });
+  const voiceController = createVoiceController({ doc, elements: state.elements, notifier });
+  const youtubeController = createYouTubeController({ doc, fetcher, notifier, elements: state.elements });
+  const statusController = createStatusController({
+    doc,
+    fetcher,
+    statusCells: state.statusCells,
+    hasStatus: state.hasStatus,
+  });
+
+  alarmController.setDefaults();
+  voiceController.bindInput();
+
+  return {
+    setAlarm: alarmController.setAlarm,
+    youtubePlay: youtubeController.youtubePlay,
+    fetchLatest: statusController.fetchLatest,
+    elements: state.elements,
   };
 };
 
