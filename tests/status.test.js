@@ -92,6 +92,17 @@ describe("status", () => {
     expect(elements.AirCondition.innerText).toBe("AirCondition");
   });
 
+  it("does nothing for null latest", () => {
+    const document = window.document.implementation.createHTMLDocument("test");
+    const elements = {
+      AirCondition: document.createElement("div"),
+    };
+
+    updateStatusCells(null, elements);
+
+    expect(elements.AirCondition.innerText).toBeUndefined();
+  });
+
   it("builds status url", () => {
     expect(buildStatusUrl({ s: "status", t: "control" })).toBe(
       "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?s=status&t=control",
