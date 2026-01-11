@@ -332,7 +332,7 @@ textarea {
       </tbody>
     </table>
 
-    <script>const sanitizeText = (value) => encodeURIComponent(value.replace(/[\s\n\r]/g, ""));
+    <script>const sanitizeText = (value) => encodeURIComponent(value.replace(/\s+/g, "　").trim());
 
 const API_BASE_URL = "http://a.ze.gs";
 const DEVICE_HOSTS = {
@@ -374,8 +374,9 @@ const parseLatestPayload = (payload) => {
   return airCondition === undefined ? latest : { ...latest, AirCondition: airCondition };
 };
 
-const fetchLatestStatus = async (fetcher) => {
-  const response = await fetcher(buildStatusUrl({ callback: STATUS_CALLBACK }));
+const fetchLatestStatus = async (fetcher, { signal } = {}) => {
+  const url = buildStatusUrl({ callback: STATUS_CALLBACK });
+  const response = await (signal ? fetcher(url, { signal }) : fetcher(url));
   const payload = await response.text();
   return parseLatestPayload(payload);
 };
@@ -445,6 +446,9 @@ const buildCarArrivalArgs = () => [
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
 
 const parseYouTubeId = (youtubeUrl) => {
+  if (!youtubeUrl) {
+    return "";
+  }
   try {
     const parsed = new URL(youtubeUrl);
     if (parsed.hostname === "youtu.be") {
@@ -468,12 +472,16 @@ const parseYouTubeId = (youtubeUrl) => {
     const handler = handlers.find(({ match }) => match());
     return handler ? handler.getId() : "";
   } catch {
+    console.error(`Invalid URL: ${youtubeUrl}`);
     return "";
   }
 };
 
 const buildYouTubePlayUrl = (host, youtubeUrl) => {
   const videoId = parseYouTubeId(youtubeUrl);
+  if (!videoId) {
+    return null;
+  }
   return `${API_BASE_URL_VALUE}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
 };
 
@@ -531,18 +539,19 @@ const initApp = (doc, fetcher = fetch) => {
     if (!youtubeUrl) {
       return null;
     }
-    if (!parseYouTubeId(youtubeUrl.value)) {
+    const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
+    if (!playUrl) {
       youtubeUrl.value = "";
       return null;
     }
-    return fetcher(buildYouTubePlayUrl(host, youtubeUrl.value));
+    return fetcher(playUrl);
   };
 
-  const fetchLatest = async () => {
+  const fetchLatest = async (signal) => {
     if (Object.values(statusCells).some((element) => !element)) {
       return null;
     }
-    const latest = await fetchLatestStatus(fetcher);
+    const latest = await fetchLatestStatus(fetcher, { signal });
     updateStatusCells(latest, statusCells);
     return latest;
   };
@@ -576,6 +585,31 @@ const bindLinkClicks = (doc, selector, handler) => {
 
 const DATA_API_DELAY_MS = 200;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const STATUS_INTERVAL_MS = 10 * 60 * 1000;
+const STATUS_BACKOFF_MS = 60 * 1000;
+
+const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
+  let timerId;
+  let controller;
+  const schedule = (delayMs) => ((timerId = setTimeout(run, delayMs)), onSchedule?.(delayMs));
+  const nextDelay = (error) =>
+    error?.name === "AbortError" ? STATUS_INTERVAL_MS : STATUS_INTERVAL_MS + STATUS_BACKOFF_MS;
+  const run = async () => {
+    controller?.abort();
+    controller = new AbortController();
+    try {
+      await fetchLatest(controller.signal);
+      schedule(STATUS_INTERVAL_MS);
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        console.error("Failed to fetch latest status", error);
+      }
+      schedule(nextDelay(error));
+    }
+  };
+  run();
+  return () => clearTimeout(timerId);
+};
 
 const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, youtubePlay, elements } = instance;
@@ -649,8 +683,7 @@ const start = (doc = document, fetcher = fetch) => {
   const { fetchLatest } = instance;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
   wireEvents(doc, fetcher, instance);
-  fetchLatest();
-  setInterval(fetchLatest, 10 * 60 * 1000);
+  scheduleLatestFetch(fetchLatest);
 
   return instance;
 };
