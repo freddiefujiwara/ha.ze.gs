@@ -7,7 +7,6 @@ import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.j
 import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
-
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 const padTime = (value) => String(value).padStart(2, "0");
 const buildTimeOptions = (count) =>
@@ -52,21 +51,13 @@ export {
   DEVICE_HOSTS,
 };
 
-const reportTooLong = (doc, value) => {
-  reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
-};
+const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
-  if (!hourSelect.options.length) {
-    hourSelect.innerHTML = buildTimeOptions(24);
-  }
-  if (!minuteSelect.options.length) {
-    minuteSelect.innerHTML = buildTimeOptions(60);
-  }
+  if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
+  if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
   const setIfExists = (select, value) => {
-    if (select.querySelector(`option[value="${value}"]`)) {
-      select.value = value;
-    }
+    if (select.querySelector(`option[value="${value}"]`)) select.value = value;
   };
   setIfExists(hourSelect, padTime(now.getHours()));
   setIfExists(minuteSelect, padTime(now.getMinutes()));
@@ -75,9 +66,7 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
 export const initApp = (doc, fetcher = fetch) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
-  if (Object.values(requiredElements).some((element) => !element)) {
-    return null;
-  }
+  if (Object.values(requiredElements).some((element) => !element)) return null;
 
   const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
@@ -85,10 +74,7 @@ export const initApp = (doc, fetcher = fetch) => {
   setAlarmDefaults(hour, min);
 
   voicetext.addEventListener("input", () => {
-    const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
-    if (!ok) {
-      reportTooLong(doc, voicetext.value);
-    }
+    if (!updateVoiceLinks(voicetext.value, { speak, speakTatami })) reportTooLong(doc, voicetext.value);
   });
 
   const setAlarm = async () => {
@@ -100,15 +86,12 @@ export const initApp = (doc, fetcher = fetch) => {
     await fetcher(alarmUrl);
     return true;
   };
+
   const youtubePlay = (host) => {
-    if (!youtubeUrl) {
-      return null;
-    }
+    if (!youtubeUrl) return null;
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
-      if (youtubeUrl.value) {
-        reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-      }
+      if (youtubeUrl.value) reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       youtubeUrl.value = "";
       return null;
     }
@@ -116,13 +99,9 @@ export const initApp = (doc, fetcher = fetch) => {
   };
 
   const fetchLatest = async (signal) => {
-    if (Object.values(statusCells).some((element) => !element)) {
-      return null;
-    }
+    if (Object.values(statusCells).some((element) => !element)) return null;
     const latest = await fetchLatestStatus(doc, fetcher, { signal });
-    if (!latest) {
-      return null;
-    }
+    if (!latest) return null;
     updateStatusCells(latest, statusCells);
     return latest;
   };

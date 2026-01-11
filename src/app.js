@@ -35,9 +35,7 @@ export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
       await fetchLatest(controller.signal);
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
-      if (error?.name !== "AbortError") {
-        reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
-      }
+      if (error?.name !== "AbortError") reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
       schedule(nextDelay(error));
     }
   };
@@ -50,9 +48,7 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
     const apiCommands = parseApiCommands(dataApi);
     for (let index = 0; index < apiCommands.length; index += 1) {
       await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
-      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
-        await delay(DATA_API_DELAY_MS);
-      }
+      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) await delay(DATA_API_DELAY_MS);
     }
   } catch (error) {
     reportError(doc, ERROR_MESSAGES.EXEC_COMMANDS, error);
@@ -65,9 +61,7 @@ export const wireEvents = (doc, fetcher, instance) => {
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
     const didSet = await setAlarm();
-    if (didSet) {
-      elements.alarmtext.value = "";
-    }
+    if (didSet) elements.alarmtext.value = "";
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
@@ -78,40 +72,27 @@ export const wireEvents = (doc, fetcher, instance) => {
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
-    if (link.dataset.api) {
-      await handleDataApi(doc, fetcher, link.dataset.api);
-    }
-    if (link.dataset.messageKey === "car-arrival") {
-      await fetcher(apiUrl(buildCarArrivalArgs()));
-    }
-    if (link.dataset.statusAction) {
-      await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
-    }
+    if (link.dataset.api) await handleDataApi(doc, fetcher, link.dataset.api);
+    if (link.dataset.messageKey === "car-arrival") await fetcher(apiUrl(buildCarArrivalArgs()));
+    if (link.dataset.statusAction) await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
   });
 
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
-    if (!host) {
-      return;
-    }
+    if (!host) return;
     const result = await instance.youtubePlay(host);
-    if (result) {
-      elements.youtubeUrl.value = "";
-    }
+    if (result) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
-      if (link.dataset.url) {
-        try {
-          const response = await fetcher(link.dataset.url);
-          if (response.ok) {
-            elements.voicetext.value = "";
-          }
-        } catch (error) {
-          reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
-        }
+      if (!link.dataset.url) return;
+      try {
+        const response = await fetcher(link.dataset.url);
+        if (response.ok) elements.voicetext.value = "";
+      } catch (error) {
+        reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
       }
     });
   });
@@ -119,25 +100,18 @@ export const wireEvents = (doc, fetcher, instance) => {
 
 export const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
-  if (!instance) {
-    return null;
-  }
-
-  const { fetchLatest } = instance;
+  if (!instance) return null;
   doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
-  scheduleLatestFetch(doc, fetchLatest);
+  scheduleLatestFetch(doc, instance.fetchLatest);
   wireEvents(doc, fetcher, instance);
-
   return instance;
 };
 
 if (typeof window !== "undefined") {
   const instance = start(document, fetch);
-
   window.api = (args) => {
     fetch(apiUrl(args));
   };
-
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
 }

@@ -9,71 +9,42 @@ const DEFAULT_OPTIONS = {
 };
 
 const notifierCache = new WeakMap();
-
 const normalizeMessage = (message) => String(message ?? "");
-
-const resolveContainer = (doc, containerId) => {
-  if (!doc?.getElementById) {
-    return null;
-  }
-  const container = doc.getElementById(containerId);
-  if (!container) {
-    return null;
-  }
-  return container.isConnected === false ? null : container;
-};
-
-const createToast = (doc, message) => {
-  const toast = doc.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-  return toast;
-};
+const getContainer = (doc, containerId) => doc?.getElementById?.(containerId) ?? null;
 
 export const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
   let debounceTimer;
-
-  const scheduleDebounceReset = () => {
+  const reset = () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       lastMessage = "";
     }, settings.debounceMs);
   };
-
-  const removeToast = (toast) => {
+  const hide = (toast) => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), settings.transitionMs);
   };
-
   const notify = (message) => {
-    scheduleDebounceReset();
-    const normalizedMessage = normalizeMessage(message);
-    if (lastMessage === normalizedMessage) {
-      return;
-    }
-    lastMessage = normalizedMessage;
-
-    const container = resolveContainer(doc, settings.containerId);
-    if (!container) {
-      return;
-    }
-
-    const toast = createToast(doc, normalizedMessage);
+    reset();
+    const text = normalizeMessage(message);
+    if (lastMessage === text) return;
+    lastMessage = text;
+    const container = getContainer(doc, settings.containerId);
+    if (!container || container.isConnected === false) return;
+    const toast = doc.createElement("div");
+    toast.className = "toast";
+    toast.textContent = text;
     container.appendChild(toast);
-
     setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
-    setTimeout(() => removeToast(toast), settings.durationMs);
+    setTimeout(() => hide(toast), settings.durationMs);
   };
-
   return { notify };
 };
 
 export const notify = (doc, message) => {
-  if (!doc) {
-    return;
-  }
+  if (!doc) return;
   let notifier = notifierCache.get(doc);
   if (!notifier) {
     notifier = createNotifier(doc);

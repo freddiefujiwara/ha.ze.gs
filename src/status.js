@@ -10,12 +10,8 @@ const stripStatusCallback = (value) =>
 
 const normalizePayload = (payload) => {
   const trimmed = payload.trim();
-  if (!trimmed) {
-    return "";
-  }
-  if (/^[{[]/.test(trimmed)) {
-    return trimmed;
-  }
+  if (!trimmed) return "";
+  if (/^[{[]/.test(trimmed)) return trimmed;
   return stripStatusCallback(trimmed).trim();
 };
 
@@ -32,9 +28,8 @@ const parseConditions = (doc, payload) => {
     const latest = conditions.at(-1);
     return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
   } catch (error) {
-    const cleanedPreview = payload.length > 200 ? `${payload.slice(0, 200)}…` : payload;
     reportError(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
-      cleanedPreview,
+      cleanedPreview: payload.length > 200 ? `${payload.slice(0, 200)}…` : payload,
       cleanedLength: payload.length,
       error,
     });
