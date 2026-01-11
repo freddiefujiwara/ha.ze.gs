@@ -99,7 +99,12 @@ export const wireEvents = (doc, fetcher, instance) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       if (link.dataset.url) {
-        await fetcher(link.dataset.url);
+        try {
+          await fetcher(link.dataset.url);
+        } catch (error) {
+          console.error("Failed to send voice command", error);
+          return;
+        }
       }
       elements.voicetext.value = "";
     });
