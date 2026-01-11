@@ -15,6 +15,8 @@ describe("youtube", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(parseYouTubeId("invalid")).toBe("");
     expect(errorSpy).toHaveBeenCalledWith("Invalid URL: invalid");
+    expect(parseYouTubeId("view-source:http://ha.ze.gs/")).toBe("");
+    expect(errorSpy).toHaveBeenCalledWith("Invalid URL: view-source:http://ha.ze.gs/");
     errorSpy.mockRestore();
   });
 

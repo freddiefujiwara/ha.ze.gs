@@ -8,6 +8,10 @@ export const parseYouTubeId = (youtubeUrl) => {
   }
   try {
     const parsed = new URL(youtubeUrl);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      console.error(`Invalid URL: ${youtubeUrl}`);
+      return "";
+    }
     if (parsed.hostname === "youtu.be") {
       return parsed.pathname.split("/")[1] || "";
     }
