@@ -9,7 +9,7 @@ import {
   replaceHostTokens,
   resolveHost,
 } from "./logic.js";
-import { notify } from "./notify.js";
+import { reportError } from "./notify.js";
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
@@ -36,14 +36,27 @@ export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
       schedule(STATUS_INTERVAL_MS);
     } catch (error) {
       if (error?.name !== "AbortError") {
-        console.error(ERROR_MESSAGES.FETCH_STATUS, error);
-        notify(doc, ERROR_MESSAGES.FETCH_STATUS);
+        reportError(doc, ERROR_MESSAGES.FETCH_STATUS, error);
       }
       schedule(nextDelay(error));
     }
   };
   run();
   return () => clearTimeout(timerId);
+};
+
+const handleDataApi = async (doc, fetcher, dataApi) => {
+  try {
+    const apiCommands = parseApiCommands(dataApi);
+    for (let index = 0; index < apiCommands.length; index += 1) {
+      await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
+      if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
+        await delay(DATA_API_DELAY_MS);
+      }
+    }
+  } catch (error) {
+    reportError(doc, ERROR_MESSAGES.EXEC_COMMANDS, error);
+  }
 };
 
 export const wireEvents = (doc, fetcher, instance) => {
@@ -59,27 +72,14 @@ export const wireEvents = (doc, fetcher, instance) => {
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
-      console.error(ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
-      notify(doc, ERROR_MESSAGES.INVALID_URL);
+      reportError(doc, ERROR_MESSAGES.INVALID_URL, elements.youtubeUrl.value);
       elements.youtubeUrl.value = "";
     }
   });
 
   bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
-      try {
-        const apiCommands = parseApiCommands(link.dataset.api);
-        for (let index = 0; index < apiCommands.length; index += 1) {
-          await fetcher(apiUrl(replaceHostTokens(apiCommands[index])));
-          if (DATA_API_DELAY_MS > 0 && index < apiCommands.length - 1) {
-            await delay(DATA_API_DELAY_MS);
-          }
-        }
-      } catch (error) {
-        console.error(ERROR_MESSAGES.EXEC_COMMANDS, error);
-        notify(doc, ERROR_MESSAGES.EXEC_COMMANDS);
-        return;
-      }
+      await handleDataApi(doc, fetcher, link.dataset.api);
     }
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
@@ -110,8 +110,7 @@ export const wireEvents = (doc, fetcher, instance) => {
             elements.voicetext.value = "";
           }
         } catch (error) {
-          console.error(ERROR_MESSAGES.SEND_VOICE, error);
-          notify(doc, ERROR_MESSAGES.SEND_VOICE);
+          reportError(doc, ERROR_MESSAGES.SEND_VOICE, error);
         }
       }
     });

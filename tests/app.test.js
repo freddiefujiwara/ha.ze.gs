@@ -5,6 +5,13 @@ import { scheduleLatestFetch, wireEvents } from "../src/app.js";
 
 vi.mock("../src/notify.js", () => ({
   notify: vi.fn(),
+  reportError: vi.fn((doc, message, details) => {
+    if (details === undefined) {
+      console.error(message);
+    } else {
+      console.error(message, details);
+    }
+  }),
 }));
 
 const buildOptions = (length) =>
@@ -40,8 +47,8 @@ describe("app wiring", () => {
   let fetcher;
 
   beforeEach(async () => {
-    const { notify } = await import("../src/notify.js");
-    notify.mockClear();
+    const { reportError } = await import("../src/notify.js");
+    reportError.mockClear();
     fetcher = vi.fn().mockResolvedValue({
       ok: true,
       text: vi
@@ -180,14 +187,14 @@ describe("app wiring", () => {
     errorSpy.mockRestore();
   });
 
-  it("notifies on network failure", async () => {
+  it("reports on network failure", async () => {
     const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
     const document = buildDocument();
     const error = new Error("network");
     const failingFetcher = vi.fn().mockRejectedValue(error);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const instance = initApp(document, failingFetcher);
-    const { notify } = await import("../src/notify.js");
+    const { reportError } = await import("../src/notify.js");
     wireEvents(document, failingFetcher, instance);
 
     document.getElementById("voicetext").value = "test";
@@ -195,7 +202,7 @@ describe("app wiring", () => {
     document.getElementById("speak").dispatchEvent(new Event("click"));
     await flushPromises();
 
-    expect(notify).toHaveBeenCalledWith(document, ERROR_MESSAGES.SEND_VOICE);
+    expect(reportError).toHaveBeenCalledWith(document, ERROR_MESSAGES.SEND_VOICE, error);
     expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.SEND_VOICE, error);
     errorSpy.mockRestore();
   });

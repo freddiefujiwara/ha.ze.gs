@@ -1,7 +1,7 @@
 import { buildAlarmUrl } from "./alarm.js";
 import { DEVICE_HOSTS, ERROR_MESSAGES } from "./constants.js";
 import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
-import { notify } from "./notify.js";
+import { reportError } from "./notify.js";
 import { STATUS_CELL_KEYS, buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "./status.js";
 import { buildCarArrivalArgs, buildVoiceUrls, updateVoiceLinks } from "./voice.js";
 import { buildYouTubePlayUrl, parseYouTubeId } from "./youtube.js";
@@ -52,6 +52,10 @@ export {
   DEVICE_HOSTS,
 };
 
+const reportTooLong = (doc, value) => {
+  reportError(doc, ERROR_MESSAGES.TOO_LONG, value);
+};
+
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) {
     hourSelect.innerHTML = buildTimeOptions(24);
@@ -83,16 +87,14 @@ export const initApp = (doc, fetcher = fetch) => {
   voicetext.addEventListener("input", () => {
     const ok = updateVoiceLinks(voicetext.value, { speak, speakTatami });
     if (!ok) {
-      console.error(ERROR_MESSAGES.TOO_LONG, voicetext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
+      reportTooLong(doc, voicetext.value);
     }
   });
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
     if (!alarmUrl) {
-      console.error(ERROR_MESSAGES.TOO_LONG, alarmtext.value);
-      notify(doc, ERROR_MESSAGES.TOO_LONG);
+      reportTooLong(doc, alarmtext.value);
       return false;
     }
     await fetcher(alarmUrl);
@@ -105,8 +107,7 @@ export const initApp = (doc, fetcher = fetch) => {
     const playUrl = buildYouTubePlayUrl(host, youtubeUrl.value);
     if (!playUrl) {
       if (youtubeUrl.value) {
-        console.error(ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
-        notify(doc, ERROR_MESSAGES.INVALID_URL);
+        reportError(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       }
       youtubeUrl.value = "";
       return null;

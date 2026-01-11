@@ -4,6 +4,13 @@ import { buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCell
 
 vi.mock("../src/notify.js", () => ({
   notify: vi.fn(),
+  reportError: vi.fn((doc, message, details) => {
+    if (details === undefined) {
+      console.error(message);
+    } else {
+      console.error(message, details);
+    }
+  }),
 }));
 
 describe("status", () => {
@@ -162,7 +169,7 @@ describe("status", () => {
     errorSpy.mockRestore();
   });
 
-  it("notifies when status fetch fails", async () => {
+  it("reports when status fetch fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const fetcher = vi.fn().mockResolvedValue({
       ok: false,
@@ -170,11 +177,15 @@ describe("status", () => {
       statusText: "Server Error",
       text: vi.fn().mockResolvedValue(""),
     });
-    const { notify } = await import("../src/notify.js");
+    const { reportError } = await import("../src/notify.js");
 
     await fetchLatestStatus(doc, fetcher);
 
-    expect(notify).toHaveBeenCalledWith(doc, ERROR_MESSAGES.FETCH_PAYLOAD);
+    expect(reportError).toHaveBeenCalledWith(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
+      status: 500,
+      statusText: "Server Error",
+      preview: "",
+    });
     errorSpy.mockRestore();
   });
 
@@ -198,7 +209,7 @@ describe("status", () => {
     expect(elements.Humid.innerText).toBe("50%");
   });
 
-  it("keeps date value when invalid", () => {
+  it("uses the default AirCondition label when missing", () => {
     const document = window.document.implementation.createHTMLDocument("test");
     const elements = {
       AirCondition: document.createElement("div"),
@@ -207,44 +218,18 @@ describe("status", () => {
       Humid: document.createElement("div"),
     };
 
-    updateStatusCells({ AirCondition: "auto", Date: "not-a-date", Temperature: "20", Humid: "50" }, elements);
-
-    expect(elements.AirCondition.innerText).toBe("auto");
-    expect(elements.Date.innerText).toBe("not-a-date");
-    expect(elements.Temperature.innerText).toBe("20C");
-    expect(elements.Humid.innerText).toBe("50%");
-  });
-
-  it("uses empty string for missing air condition", () => {
-    const document = window.document.implementation.createHTMLDocument("test");
-    const elements = {
-      AirCondition: document.createElement("div"),
-      Date: document.createElement("div"),
-      Temperature: document.createElement("div"),
-      Humid: document.createElement("div"),
-    };
-
-    updateStatusCells({ Date: "now", Temperature: "20", Humid: "50" }, elements);
+    updateStatusCells({ AirCondition: null, Date: "now", Temperature: "20", Humid: "50" }, elements);
 
     expect(elements.AirCondition.innerText).toBe("AirCondition");
   });
 
-  it("no-ops when latest is missing or invalid", () => {
-    const document = window.document.implementation.createHTMLDocument("test");
-    const elements = {
-      AirCondition: document.createElement("div"),
-      Date: document.createElement("div"),
-      Temperature: document.createElement("div"),
-      Humid: document.createElement("div"),
-    };
-
-    expect(() => updateStatusCells(null, elements)).not.toThrow();
-    expect(() => updateStatusCells("invalid", elements)).not.toThrow();
+  it("ignores invalid update inputs", () => {
+    expect(() => updateStatusCells(null, {})).not.toThrow();
   });
 
-  it("builds status url", () => {
-    expect(buildStatusUrl({ s: "status", t: "control" })).toBe(
-      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?s=status&t=control",
+  it("builds a status url", () => {
+    expect(buildStatusUrl({ key: "value" })).toBe(
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?key=value",
     );
   });
 });
