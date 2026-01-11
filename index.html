@@ -333,57 +333,45 @@ const DEFAULT_OPTIONS = {
   transitionMs: 300,
 };
 
-const notifierCache = new WeakMap();
-const normalizeMessage = (message) => String(message ?? "");
-const getContainer = (doc, containerId) => doc?.getElementById?.(containerId) ?? null;
+const cache = new WeakMap();
+const messageText = (message) => String(message ?? "");
 
 const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
-  let debounceTimer;
-  const reset = () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
+  let timer;
+  const notify = (message) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
       lastMessage = "";
     }, settings.debounceMs);
-  };
-  const hide = (toast) => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.remove(), settings.transitionMs);
-  };
-  const notify = (message) => {
-    reset();
-    const text = normalizeMessage(message);
-    if (lastMessage === text) return;
+    const text = messageText(message);
+    if (text === lastMessage) return;
     lastMessage = text;
-    const container = getContainer(doc, settings.containerId);
+    const container = doc?.getElementById?.(settings.containerId);
     if (!container || container.isConnected === false) return;
     const toast = doc.createElement("div");
     toast.className = "toast";
     toast.textContent = text;
     container.appendChild(toast);
     setTimeout(() => toast.classList.add("show"), settings.showDelayMs);
-    setTimeout(() => hide(toast), settings.durationMs);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), settings.transitionMs);
+    }, settings.durationMs);
   };
   return { notify };
 };
 
 const notify = (doc, message) => {
   if (!doc) return;
-  let notifier = notifierCache.get(doc);
-  if (!notifier) {
-    notifier = createNotifier(doc);
-    notifierCache.set(doc, notifier);
-  }
+  const notifier = cache.get(doc) ?? createNotifier(doc);
+  cache.set(doc, notifier);
   notifier.notify(message);
 };
 
 const reportError = (doc, message, details) => {
-  if (details === undefined) {
-    console.error(message);
-  } else {
-    console.error(message, details);
-  }
+  details === undefined ? console.error(message) : console.error(message, details);
   notify(doc, message);
 };
 
@@ -405,8 +393,7 @@ const stripStatusCallback = (value) =>
 const normalizePayload = (payload) => {
   const trimmed = payload.trim();
   if (!trimmed) return "";
-  if (/^[{[]/.test(trimmed)) return trimmed;
-  return stripStatusCallback(trimmed).trim();
+  return /^[{[]/.test(trimmed) ? trimmed : stripStatusCallback(trimmed).trim();
 };
 
 const parseConditions = (doc, payload) => {
@@ -477,14 +464,8 @@ const updateStatusCells = (latest, elements) => {
   if (!latest || typeof latest !== "object") return;
   STATUS_KEYS.forEach((key) => {
     const value = latest[key];
-    if (key === "AirCondition") {
-      elements[key].innerText = value == null ? "AirCondition" : String(value);
-      return;
-    }
-    if (key === "Date") {
-      elements[key].innerText = formatDateTimeLocal(value);
-      return;
-    }
+    if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : String(value));
+    if (key === "Date") return void (elements[key].innerText = formatDateTimeLocal(value));
     elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
   });
 };
@@ -595,9 +576,7 @@ const reportTooLong = (doc, value) => reportError(doc, ERROR_MESSAGES.TOO_LONG, 
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
   if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
-  const setIfExists = (select, value) => {
-    if (select.querySelector(`option[value="${value}"]`)) select.value = value;
-  };
+  const setIfExists = (select, value) => select.querySelector(`option[value="${value}"]`) && (select.value = value);
   setIfExists(hourSelect, padTime(now.getHours()));
   setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
@@ -618,10 +597,7 @@ const initApp = (doc, fetcher = fetch) => {
 
   const setAlarm = async () => {
     const alarmUrl = buildAlarmUrl(hour.value, min.value, alarmtext.value);
-    if (!alarmUrl) {
-      reportTooLong(doc, alarmtext.value);
-      return false;
-    }
+    if (!alarmUrl) return reportTooLong(doc, alarmtext.value), false;
     await fetcher(alarmUrl);
     return true;
   };
@@ -664,12 +640,12 @@ const initApp = (doc, fetcher = fetch) => {
 };
 
 const bindLinkClicks = (doc, selector, handler) => {
-  doc.querySelectorAll(selector).forEach((link) => {
+  doc.querySelectorAll(selector).forEach((link) =>
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       await handler(link);
-    });
-  });
+    }),
+  );
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -712,8 +688,7 @@ const wireEvents = (doc, fetcher, instance) => {
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    const didSet = await setAlarm();
-    if (didSet) elements.alarmtext.value = "";
+    if (await setAlarm()) elements.alarmtext.value = "";
   });
 
   elements.youtubeUrl.addEventListener("blur", () => {
@@ -732,8 +707,7 @@ const wireEvents = (doc, fetcher, instance) => {
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (!host) return;
-    const result = await instance.youtubePlay(host);
-    if (result) elements.youtubeUrl.value = "";
+    if (await instance.youtubePlay(host)) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
