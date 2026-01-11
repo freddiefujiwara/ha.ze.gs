@@ -12,9 +12,9 @@ import {
 
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) => {
-    link.addEventListener("click", (event) => {
+    link.addEventListener("click", async (event) => {
       event.preventDefault();
-      handler(link);
+      await handler(link);
     });
   });
 };
@@ -45,7 +45,7 @@ export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
 };
 
 export const wireEvents = (doc, fetcher, instance) => {
-  const { setAlarm, youtubePlay, elements } = instance;
+  const { setAlarm, elements } = instance;
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -59,7 +59,7 @@ export const wireEvents = (doc, fetcher, instance) => {
     }
   });
 
-  bindLinkClicks(doc, "a[data-api], a[data-fetch], a[data-status-action], a[data-message-key]", async (link) => {
+  bindLinkClicks(doc, "a[data-api], a[data-status-action], a[data-message-key]", async (link) => {
     if (link.dataset.api) {
       try {
         const apiCommands = parseApiCommands(link.dataset.api);
@@ -77,9 +77,6 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (link.dataset.messageKey === "car-arrival") {
       await fetcher(apiUrl(buildCarArrivalArgs()));
     }
-    if (link.dataset.fetch) {
-      await fetcher(link.dataset.fetch);
-    }
     if (link.dataset.statusAction) {
       await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
     }
@@ -90,7 +87,7 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (!host) {
       return;
     }
-    const result = await youtubePlay(host);
+    const result = await instance.youtubePlay(host);
     if (result) {
       elements.youtubeUrl.value = "";
     }

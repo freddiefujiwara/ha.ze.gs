@@ -314,7 +314,6 @@ describe("app bootstrap", () => {
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
     expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
-    expect(fetcher).toHaveBeenCalledWith("http://example.com/fetch");
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");

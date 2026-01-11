@@ -27,6 +27,14 @@ describe("status", () => {
     expect(parseLatestPayload(payload)).toEqual({ Date: "now" });
   });
 
+  it("returns null for invalid json", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const payload = "__statusCallback&&__statusCallback(invalid);";
+    expect(parseLatestPayload(payload)).toBeNull();
+    expect(errorSpy).toHaveBeenCalledOnce();
+    errorSpy.mockRestore();
+  });
+
   it("fetches latest status", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       text: vi

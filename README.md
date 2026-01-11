@@ -14,6 +14,7 @@ This is a small web page to control home devices and show simple status values.
 - `src/styles.css`: the page styles.
 - `src/app.js`: wires the DOM and exposes browser globals.
 - `src/logic.js`: app glue that re-exports the modules used by `app.js`.
+- `src/constants.js`: shared constants.
 - `src/alarm.js`: alarm URL builder.
 - `src/hosts.js`: API base URL + host resolution helpers.
 - `src/status.js`: status polling/parsing and status cell updates.
@@ -41,7 +42,7 @@ npm run build
 The output is written to `dist/index.html`.
 
 ### No-JS behavior
-During build, links with `data-*` attributes are converted to real `http://a.ze.gs/...` URLs
+During build, links with `data-*` attributes are converted to `<API>` URLs
 in `dist/index.html` so text-only/no-JS browsers can use them. When JavaScript runs,
 all anchor `href`s are reset to `#` and handled via event listeners.
 
