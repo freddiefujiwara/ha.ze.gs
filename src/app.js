@@ -45,7 +45,7 @@ export const scheduleLatestFetch = (fetchLatest, { onSchedule } = {}) => {
 };
 
 export const wireEvents = (doc, fetcher, instance) => {
-  const { setAlarm, youtubePlay, elements } = instance;
+  const { setAlarm, elements } = instance;
 
   elements.setButton.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -90,7 +90,7 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (!host) {
       return;
     }
-    const result = await youtubePlay(host);
+    const result = await instance.youtubePlay(host);
     if (result) {
       elements.youtubeUrl.value = "";
     }
