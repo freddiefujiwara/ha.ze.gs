@@ -104,6 +104,22 @@ describe("app wiring", () => {
     expect(instance.youtubePlay("192.168.1.22")).toBeNull();
   });
 
+  it("uses data-youtube-vol when clicking youtube link", async () => {
+    const document = buildDocument();
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<a href="#" data-youtube-key="tv" data-youtube-vol="20">TV YouTube</a>`,
+    );
+    const instance = initApp(document, fetcher);
+
+    wireEvents(document, fetcher, instance);
+    document.getElementById("youtube_url").value = "https://youtu.be/abc123";
+    document.querySelector("a[data-youtube-vol]").dispatchEvent(new Event("click"));
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.219/-v/20/-i/abc123");
+  });
+
   it("skips latest fetch when status cells missing", async () => {
     const document = buildDocument();
     document.getElementById("Date").remove();

@@ -79,7 +79,8 @@ export const wireEvents = (doc, fetcher, instance) => {
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (!host) return;
-    if (await instance.youtubePlay(host)) elements.youtubeUrl.value = "";
+    const volume = link.dataset.youtubeVol;
+    if (await instance.youtubePlay(host, volume)) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {

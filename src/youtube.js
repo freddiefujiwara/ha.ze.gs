@@ -35,12 +35,15 @@ export const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts =
     }
   };
 
-  const buildYouTubePlayUrl = (host, youtubeUrl) => {
+  const buildYouTubePlayUrl = (host, youtubeUrl, volume) => {
     const videoId = parseYouTubeId(youtubeUrl);
     if (!videoId) {
       return null;
     }
-    return `${apiBaseUrl}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+    const volumeNumber = Number(volume);
+    const resolvedVolume =
+      Number.isFinite(volumeNumber) && volumeNumber >= 0 && volumeNumber <= 100 ? volumeNumber : 40;
+    return `${apiBaseUrl}/youtube-play/-h/${host}/-v/${resolvedVolume}/-i/${videoId}`;
   };
 
   return {
@@ -60,10 +63,10 @@ export const createYouTubeController = ({
   elements,
   buildYouTubePlayUrl: buildYouTubePlayUrlFn = buildYouTubePlayUrl,
 } = {}) => {
-  const youtubePlay = (host) => {
+  const youtubePlay = (host, volume) => {
     const { youtubeUrl } = elements;
     if (!youtubeUrl) return null;
-    const playUrl = buildYouTubePlayUrlFn(host, youtubeUrl.value);
+    const playUrl = buildYouTubePlayUrlFn(host, youtubeUrl.value, volume);
     if (!playUrl) {
       if (youtubeUrl.value) notifier?.reportError?.(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       youtubeUrl.value = "";
