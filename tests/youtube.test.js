@@ -20,6 +20,15 @@ describe("youtube", () => {
     expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123")).toBe(
       "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     );
+    expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "20")).toBe(
+      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/20/-i/abc123",
+    );
+    expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "-1")).toBe(
+      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+    );
+    expect(buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "101")).toBe(
+      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+    );
     expect(buildYouTubePlayUrl("192.168.1.22", "https://example.com/watch?v=abc")).toBeNull();
   });
 });
