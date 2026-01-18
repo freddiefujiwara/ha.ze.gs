@@ -243,7 +243,7 @@ textarea {
           <td><a href="http://a.ze.gs/catt/-d/192.168.1.219/stop?url=http://ha.ze.gs" data-api='["catt","-d","host:tv","stop"]'>Off</a></td>
         </tr>
         <tr>
-          <td id="YouTube"><a href="#" data-youtube-key="tv">YouTube</a></td>
+          <td id="YouTube"><a href="#" data-youtube-key="tv" data-youtube-vol="20">YouTube</a></td>
           <td><textarea id="youtube_url"></textarea></td>
           <td><a href="#" data-youtube-key="nest">Nest Wifi</a></td>
           <td><a href="#" data-youtube-key="tatami">Tatami WiFi</a></td>
@@ -664,12 +664,15 @@ const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts = YOUTUB
     }
   };
 
-  const buildYouTubePlayUrl = (host, youtubeUrl) => {
+  const buildYouTubePlayUrl = (host, youtubeUrl, volume) => {
     const videoId = parseYouTubeId(youtubeUrl);
     if (!videoId) {
       return null;
     }
-    return `${apiBaseUrl}/youtube-play/-h/${host}/-v/40/-i/${videoId}`;
+    const volumeNumber = Number(volume);
+    const resolvedVolume =
+      Number.isFinite(volumeNumber) && volumeNumber >= 0 && volumeNumber <= 100 ? volumeNumber : 40;
+    return `${apiBaseUrl}/youtube-play/-h/${host}/-v/${resolvedVolume}/-i/${videoId}`;
   };
 
   return {
@@ -689,10 +692,10 @@ const createYouTubeController = ({
   elements,
   buildYouTubePlayUrl: buildYouTubePlayUrlFn = buildYouTubePlayUrl,
 } = {}) => {
-  const youtubePlay = (host) => {
+  const youtubePlay = (host, volume) => {
     const { youtubeUrl } = elements;
     if (!youtubeUrl) return null;
-    const playUrl = buildYouTubePlayUrlFn(host, youtubeUrl.value);
+    const playUrl = buildYouTubePlayUrlFn(host, youtubeUrl.value, volume);
     if (!playUrl) {
       if (youtubeUrl.value) notifier?.reportError?.(doc, ERROR_MESSAGES.INVALID_URL, youtubeUrl.value);
       youtubeUrl.value = "";
@@ -845,7 +848,8 @@ const wireEvents = (doc, fetcher, instance) => {
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (!host) return;
-    if (await instance.youtubePlay(host)) elements.youtubeUrl.value = "";
+    const volume = link.dataset.youtubeVol;
+    if (await instance.youtubePlay(host, volume)) elements.youtubeUrl.value = "";
   });
 
   [elements.speak, elements.speakTatami].forEach((link) => {
