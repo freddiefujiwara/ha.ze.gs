@@ -277,7 +277,15 @@ textarea {
       </tbody>
     </table>
 
-    <script>const createTextUtils = () => {
+    <script>/**
+ * @returns {{
+ *   normalizeText: (value: unknown) => string,
+ *   sanitizeText: (value: unknown) => string,
+ *   getMaxEncodedLength: (maxText: unknown) => number,
+ *   isTextTooLong: (value: unknown, maxText: unknown) => boolean
+ * }}
+ */
+const createTextUtils = () => {
   const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
   const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
   const getMaxEncodedLength = (maxText) => encodeURIComponent(normalizeText(maxText)).length;
@@ -337,6 +345,14 @@ const ERROR_MESSAGES = {
   TOO_LONG: "Too long text",
 };
 
+/**
+ * @param {{ apiBaseUrl?: string, deviceHosts?: Record<string, string> }} [options]
+ * @returns {{
+ *   apiUrl: (args: Array<string | number>) => string,
+ *   resolveHost: (value: string) => string,
+ *   replaceHostTokens: (args: Array<string | number>) => Array<string | number>
+ * }}
+ */
 const createHostResolver = ({ apiBaseUrl = API_BASE_URL, deviceHosts = DEVICE_HOSTS } = {}) => {
   const apiUrl = (args) => `${apiBaseUrl}/${args.map(String).join("/")}`;
   const resolveHost = (value) => deviceHosts[value] ?? value;
@@ -365,6 +381,17 @@ const DEFAULT_OPTIONS = {
 const cache = new WeakMap();
 const messageText = (message) => String(message ?? "");
 
+/**
+ * @param {Document} doc
+ * @param {{
+ *   containerId?: string,
+ *   debounceMs?: number,
+ *   durationMs?: number,
+ *   showDelayMs?: number,
+ *   transitionMs?: number
+ * }} [options]
+ * @returns {{ notify: (message: unknown) => void }}
+ */
 const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
@@ -392,6 +419,10 @@ const createNotifier = (doc, options = {}) => {
   return { notify };
 };
 
+/**
+ * @param {Document} doc
+ * @param {unknown} message
+ */
 const notify = (doc, message) => {
   if (!doc) return;
   const notifier = cache.get(doc) ?? createNotifier(doc);
@@ -399,15 +430,24 @@ const notify = (doc, message) => {
   notifier.notify(message);
 };
 
+/**
+ * @param {Document} doc
+ * @param {string} message
+ * @param {unknown} [details]
+ */
 const reportError = (doc, message, details) => {
   details === undefined ? console.error(message) : console.error(message, details);
   notify(doc, message);
 };
 
+/**
+ * @param {string} hour
+ * @param {string} minute
+ * @param {string} text
+ * @returns {string | null}
+ */
 const buildAlarmUrl = (hour, minute, text) => {
-  if (isTextTooLong(text, MAX_TEXT)) {
-    return null;
-  }
+  if (isTextTooLong(text, MAX_TEXT)) return null;
   const sanitized = sanitizeText(text);
   return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
@@ -419,6 +459,11 @@ const buildTimeOptions = (count) =>
     return `<option value="${value}">${value}</option>`;
   }).join("");
 
+/**
+ * @param {HTMLSelectElement} hourSelect
+ * @param {HTMLSelectElement} minuteSelect
+ * @param {Date} [now]
+ */
 const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
   if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
@@ -427,6 +472,15 @@ const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   elements: { hour: HTMLSelectElement, min: HTMLSelectElement, alarmtext: HTMLInputElement },
+ *   buildAlarmUrl?: (hour: string, minute: string, text: string) => string | null
+ * }} params
+ */
 const createAlarmController = ({
   doc,
   fetcher,
@@ -447,6 +501,21 @@ const createAlarmController = ({
   return { setDefaults, setAlarm };
 };
 
+/**
+ * @param {{
+ *   statusScriptUrl?: string,
+ *   statusCallback?: string,
+ *   statusKeys?: Array<string>,
+ *   reportError?: (doc: Document, message: string, details?: unknown) => void
+ * }} [options]
+ * @returns {{
+ *   buildStatusUrl: (params?: Record<string, string>) => string,
+ *   parseLatestPayload: (doc: Document, payload: string) => Record<string, unknown> | null,
+ *   fetchLatestStatus: (doc: Document, fetcher: typeof fetch, options?: { signal?: AbortSignal }) => Promise<Record<string, unknown> | null>,
+ *   updateStatusCells: (latest: Record<string, unknown>, elements: Record<string, HTMLElement>) => void,
+ *   statusCellKeys: Array<string>
+ * }}
+ */
 const createStatusService = ({
   statusScriptUrl = STATUS_SCRIPT_URL,
   statusCallback = STATUS_CALLBACK,
@@ -553,6 +622,15 @@ const defaultStatusService = createStatusService();
 
 const { buildStatusUrl, parseLatestPayload, fetchLatestStatus, updateStatusCells } = defaultStatusService;
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   statusCells: Record<string, HTMLElement>,
+ *   hasStatus?: boolean,
+ *   statusService?: ReturnType<typeof createStatusService>
+ * }} params
+ */
 const createStatusController = ({
   doc,
   fetcher,
@@ -572,6 +650,23 @@ const createStatusController = ({
 
 const STATUS_CELL_KEYS = STATUS_KEYS;
 
+/**
+ * @param {{
+ *   apiBaseUrl?: string,
+ *   voiceHosts?: { speak: string, speakTatami: string },
+ *   deviceHosts?: Record<string, string>,
+ *   maxText?: string,
+ *   textUtils?: {
+ *     sanitizeText: (value: unknown) => string,
+ *     isTextTooLong: (value: unknown, maxText: unknown) => boolean
+ *   }
+ * }} [options]
+ * @returns {{
+ *   buildVoiceUrls: (voiceText: string) => { speak: string, speakTatami: string },
+ *   updateVoiceLinks: (voiceText: string, elements: { speak: HTMLElement, speakTatami: HTMLElement }) => boolean,
+ *   buildCarArrivalArgs: () => Array<string | number>
+ * }}
+ */
 const createVoiceService = ({
   apiBaseUrl = API_BASE_URL,
   voiceHosts = VOICE_HOSTS,
@@ -622,7 +717,20 @@ const defaultVoiceService = createVoiceService();
 
 const { buildVoiceUrls, updateVoiceLinks, buildCarArrivalArgs } = defaultVoiceService;
 
-const createVoiceController = ({ doc, elements, notifier, updateVoiceLinks: updateVoiceLinksFn = updateVoiceLinks } = {}) => {
+/**
+ * @param {{
+ *   doc: Document,
+ *   elements: { voicetext: HTMLInputElement, speak: HTMLElement, speakTatami: HTMLElement },
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   updateVoiceLinks?: (voiceText: string, elements: { speak: HTMLElement, speakTatami: HTMLElement }) => boolean
+ * }} params
+ */
+const createVoiceController = ({
+  doc,
+  elements,
+  notifier,
+  updateVoiceLinks: updateVoiceLinksFn = updateVoiceLinks,
+} = {}) => {
   const bindInput = () => {
     elements.voicetext.addEventListener("input", () => {
       if (!updateVoiceLinksFn(elements.voicetext.value, { speak: elements.speak, speakTatami: elements.speakTatami })) {
@@ -633,6 +741,13 @@ const createVoiceController = ({ doc, elements, notifier, updateVoiceLinks: upda
   return { bindInput };
 };
 
+/**
+ * @param {{ apiBaseUrl?: string, youtubeHosts?: Set<string> }} [options]
+ * @returns {{
+ *   parseYouTubeId: (youtubeUrl: string) => string | null,
+ *   buildYouTubePlayUrl: (host: string, youtubeUrl: string, volume?: string | number) => string | null
+ * }}
+ */
 const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts = YOUTUBE_HOSTS } = {}) => {
   const parseYouTubeId = (youtubeUrl) => {
     if (!youtubeUrl) {
@@ -689,6 +804,15 @@ const defaultYouTubeService = createYouTubeService();
 
 const { parseYouTubeId, buildYouTubePlayUrl } = defaultYouTubeService;
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   elements: { youtubeUrl?: HTMLInputElement },
+ *   buildYouTubePlayUrl?: (host: string, youtubeUrl: string, volume?: string | number) => string | null
+ * }} params
+ */
 const createYouTubeController = ({
   doc,
   fetcher,
@@ -711,8 +835,17 @@ const createYouTubeController = ({
 };
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+/**
+ * @param {Document} doc
+ * @param {Array<string>} ids
+ * @returns {Record<string, HTMLElement | null>}
+ */
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
+/**
+ * @param {string} value
+ * @returns {Array<Array<string | number>>}
+ */
 const parseApiCommands = (value) => {
   if (!value) return [];
   let parsed;
@@ -731,6 +864,26 @@ const parseApiCommands = (value) => {
   return parsed.every(Array.isArray) ? parsed : [parsed];
 };
 
+/**
+ * @param {Document} doc
+ * @returns {{
+ *   hasRequired: boolean,
+ *   hasStatus: boolean,
+ *   requiredElements: Record<string, HTMLElement | null>,
+ *   statusCells: Record<string, HTMLElement | null>,
+ *   elements: {
+ *     voicetext: HTMLInputElement | null,
+ *     speak: HTMLElement | null,
+ *     speakTatami: HTMLElement | null,
+ *     hour: HTMLSelectElement | null,
+ *     min: HTMLSelectElement | null,
+ *     alarmtext: HTMLInputElement | null,
+ *     setButton: HTMLElement | null,
+ *     youtubeUrl: HTMLInputElement | null,
+ *     statusCells: Record<string, HTMLElement | null>
+ *   }
+ * }}
+ */
 const createAppState = (doc) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
@@ -757,7 +910,16 @@ const createAppState = (doc) => {
   };
 };
 
-
+/**
+ * @param {Document} doc
+ * @param {typeof fetch} [fetcher]
+ * @returns {{
+ *   setAlarm: () => Promise<boolean>,
+ *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
+ *   fetchLatest: (signal?: AbortSignal) => Promise<Record<string, unknown> | null>,
+ *   elements: ReturnType<typeof createAppState>["elements"]
+ * } | null}
+ */
 const initApp = (doc, fetcher = fetch) => {
   const state = createAppState(doc);
   if (!state.hasRequired) return null;
@@ -784,6 +946,11 @@ const initApp = (doc, fetcher = fetch) => {
   };
 };
 
+/**
+ * @param {Document} doc
+ * @param {string} selector
+ * @param {(link: HTMLAnchorElement) => Promise<void>} handler
+ */
 const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) =>
     link.addEventListener("click", async (event) => {
@@ -795,6 +962,12 @@ const bindLinkClicks = (doc, selector, handler) => {
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * @param {Document} doc
+ * @param {(signal?: AbortSignal) => Promise<unknown>} fetchLatest
+ * @param {{ onSchedule?: (delayMs: number) => void }} [options]
+ * @returns {() => void}
+ */
 const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
   let timerId;
   let controller;
@@ -828,6 +1001,22 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
   }
 };
 
+/**
+ * @param {Document} doc
+ * @param {typeof fetch} fetcher
+ * @param {{
+ *   setAlarm: () => Promise<boolean>,
+ *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
+ *   elements: {
+ *     setButton: HTMLElement,
+ *     alarmtext: HTMLInputElement,
+ *     youtubeUrl: HTMLInputElement,
+ *     speak: HTMLElement,
+ *     speakTatami: HTMLElement,
+ *     voicetext: HTMLInputElement
+ *   }
+ * }} instance
+ */
 const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, elements } = instance;
 
@@ -870,6 +1059,11 @@ const wireEvents = (doc, fetcher, instance) => {
   });
 };
 
+/**
+ * @param {Document} [doc]
+ * @param {typeof fetch} [fetcher]
+ * @returns {ReturnType<typeof initApp> | null}
+ */
 const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
   if (!instance) return null;
