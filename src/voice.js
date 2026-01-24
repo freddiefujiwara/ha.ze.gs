@@ -1,6 +1,23 @@
 import { API_BASE_URL, CAR_ARRIVAL_MESSAGE, DEVICE_HOSTS, ERROR_MESSAGES, MAX_TEXT, VOICE_HOSTS } from "./constants.js";
 import { createTextUtils } from "./text.js";
 
+/**
+ * @param {{
+ *   apiBaseUrl?: string,
+ *   voiceHosts?: { speak: string, speakTatami: string },
+ *   deviceHosts?: Record<string, string>,
+ *   maxText?: string,
+ *   textUtils?: {
+ *     sanitizeText: (value: unknown) => string,
+ *     isTextTooLong: (value: unknown, maxText: unknown) => boolean
+ *   }
+ * }} [options]
+ * @returns {{
+ *   buildVoiceUrls: (voiceText: string) => { speak: string, speakTatami: string },
+ *   updateVoiceLinks: (voiceText: string, elements: { speak: HTMLElement, speakTatami: HTMLElement }) => boolean,
+ *   buildCarArrivalArgs: () => Array<string | number>
+ * }}
+ */
 export const createVoiceService = ({
   apiBaseUrl = API_BASE_URL,
   voiceHosts = VOICE_HOSTS,
@@ -51,7 +68,20 @@ const defaultVoiceService = createVoiceService();
 
 export const { buildVoiceUrls, updateVoiceLinks, buildCarArrivalArgs } = defaultVoiceService;
 
-export const createVoiceController = ({ doc, elements, notifier, updateVoiceLinks: updateVoiceLinksFn = updateVoiceLinks } = {}) => {
+/**
+ * @param {{
+ *   doc: Document,
+ *   elements: { voicetext: HTMLInputElement, speak: HTMLElement, speakTatami: HTMLElement },
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   updateVoiceLinks?: (voiceText: string, elements: { speak: HTMLElement, speakTatami: HTMLElement }) => boolean
+ * }} params
+ */
+export const createVoiceController = ({
+  doc,
+  elements,
+  notifier,
+  updateVoiceLinks: updateVoiceLinksFn = updateVoiceLinks,
+} = {}) => {
   const bindInput = () => {
     elements.voicetext.addEventListener("input", () => {
       if (!updateVoiceLinksFn(elements.voicetext.value, { speak: elements.speak, speakTatami: elements.speakTatami })) {

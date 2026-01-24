@@ -11,6 +11,17 @@ const DEFAULT_OPTIONS = {
 const cache = new WeakMap();
 const messageText = (message) => String(message ?? "");
 
+/**
+ * @param {Document} doc
+ * @param {{
+ *   containerId?: string,
+ *   debounceMs?: number,
+ *   durationMs?: number,
+ *   showDelayMs?: number,
+ *   transitionMs?: number
+ * }} [options]
+ * @returns {{ notify: (message: unknown) => void }}
+ */
 export const createNotifier = (doc, options = {}) => {
   const settings = { ...DEFAULT_OPTIONS, ...options };
   let lastMessage = "";
@@ -38,6 +49,10 @@ export const createNotifier = (doc, options = {}) => {
   return { notify };
 };
 
+/**
+ * @param {Document} doc
+ * @param {unknown} message
+ */
 export const notify = (doc, message) => {
   if (!doc) return;
   const notifier = cache.get(doc) ?? createNotifier(doc);
@@ -45,6 +60,11 @@ export const notify = (doc, message) => {
   notifier.notify(message);
 };
 
+/**
+ * @param {Document} doc
+ * @param {string} message
+ * @param {unknown} [details]
+ */
 export const reportError = (doc, message, details) => {
   details === undefined ? console.error(message) : console.error(message, details);
   notify(doc, message);

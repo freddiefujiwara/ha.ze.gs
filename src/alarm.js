@@ -1,10 +1,14 @@
 import { ALARM_SCRIPT_URL, ERROR_MESSAGES, MAX_TEXT } from "./constants.js";
 import { isTextTooLong, sanitizeText } from "./text.js";
 
+/**
+ * @param {string} hour
+ * @param {string} minute
+ * @param {string} text
+ * @returns {string | null}
+ */
 export const buildAlarmUrl = (hour, minute, text) => {
-  if (isTextTooLong(text, MAX_TEXT)) {
-    return null;
-  }
+  if (isTextTooLong(text, MAX_TEXT)) return null;
   const sanitized = sanitizeText(text);
   return `${ALARM_SCRIPT_URL}?time=${hour}:${minute}:00&text=${sanitized}`;
 };
@@ -16,6 +20,11 @@ const buildTimeOptions = (count) =>
     return `<option value="${value}">${value}</option>`;
   }).join("");
 
+/**
+ * @param {HTMLSelectElement} hourSelect
+ * @param {HTMLSelectElement} minuteSelect
+ * @param {Date} [now]
+ */
 export const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => {
   if (!hourSelect.options.length) hourSelect.innerHTML = buildTimeOptions(24);
   if (!minuteSelect.options.length) minuteSelect.innerHTML = buildTimeOptions(60);
@@ -24,6 +33,15 @@ export const setAlarmDefaults = (hourSelect, minuteSelect, now = new Date()) => 
   setIfExists(minuteSelect, padTime(now.getMinutes()));
 };
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   elements: { hour: HTMLSelectElement, min: HTMLSelectElement, alarmtext: HTMLInputElement },
+ *   buildAlarmUrl?: (hour: string, minute: string, text: string) => string | null
+ * }} params
+ */
 export const createAlarmController = ({
   doc,
   fetcher,

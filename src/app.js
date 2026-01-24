@@ -11,6 +11,11 @@ import {
 } from "./logic.js";
 import { reportError } from "./notify.js";
 
+/**
+ * @param {Document} doc
+ * @param {string} selector
+ * @param {(link: HTMLAnchorElement) => Promise<void>} handler
+ */
 export const bindLinkClicks = (doc, selector, handler) => {
   doc.querySelectorAll(selector).forEach((link) =>
     link.addEventListener("click", async (event) => {
@@ -22,6 +27,12 @@ export const bindLinkClicks = (doc, selector, handler) => {
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * @param {Document} doc
+ * @param {(signal?: AbortSignal) => Promise<unknown>} fetchLatest
+ * @param {{ onSchedule?: (delayMs: number) => void }} [options]
+ * @returns {() => void}
+ */
 export const scheduleLatestFetch = (doc, fetchLatest, { onSchedule } = {}) => {
   let timerId;
   let controller;
@@ -55,6 +66,22 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
   }
 };
 
+/**
+ * @param {Document} doc
+ * @param {typeof fetch} fetcher
+ * @param {{
+ *   setAlarm: () => Promise<boolean>,
+ *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
+ *   elements: {
+ *     setButton: HTMLElement,
+ *     alarmtext: HTMLInputElement,
+ *     youtubeUrl: HTMLInputElement,
+ *     speak: HTMLElement,
+ *     speakTatami: HTMLElement,
+ *     voicetext: HTMLInputElement
+ *   }
+ * }} instance
+ */
 export const wireEvents = (doc, fetcher, instance) => {
   const { setAlarm, elements } = instance;
 
@@ -97,6 +124,11 @@ export const wireEvents = (doc, fetcher, instance) => {
   });
 };
 
+/**
+ * @param {Document} [doc]
+ * @param {typeof fetch} [fetcher]
+ * @returns {ReturnType<typeof initApp> | null}
+ */
 export const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
   if (!instance) return null;
