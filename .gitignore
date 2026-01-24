@@ -2,3 +2,7 @@ node_modules/
 coverage/
 dist/
 package-lock.json
+.agents/
+.codex/
+.gemini/
+.github/skills/

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
 import { scheduleLatestFetch, wireEvents } from "../src/app.js";
+import { buildAppDocument, flushPromises, hourOptions, minOptions } from "./test-helpers.js";
 
 vi.mock("../src/notify.js", () => ({
   notify: vi.fn(),
@@ -13,35 +14,6 @@ vi.mock("../src/notify.js", () => ({
     }
   }),
 }));
-
-const buildOptions = (length) =>
-  Array.from({ length }, (_, index) => {
-    const value = String(index).padStart(2, "0");
-    return `<option value="${value}">${value}</option>`;
-  }).join("");
-
-const hourOptions = buildOptions(24);
-const minOptions = buildOptions(60);
-
-const buildDocument = () => {
-  const document = window.document.implementation.createHTMLDocument("test");
-  document.body.innerHTML = `
-    <textarea id="voicetext"></textarea>
-    <a id="speak" href="#">Nest Wifi</a>
-    <a id="speak_tatami" href="#">Tatami</a>
-    <select id="hour">${hourOptions}</select>
-    <select id="min">${minOptions}</select>
-    <textarea id="alarmtext"></textarea>
-    <a id="set" href="#">Set</a>
-    <textarea id="youtube_url"></textarea>
-    <div id="AirCondition"></div>
-    <div id="Date"></div>
-    <div id="Temperature"></div>
-    <div id="Humid"></div>
-    <a href="#" data-youtube-host="192.168.1.22">YT</a>
-  `;
-  return document;
-};
 
 describe("app wiring", () => {
   let fetcher;
@@ -60,7 +32,7 @@ describe("app wiring", () => {
   it("initializes and wires inputs", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-12-31T10:20:00Z"));
-    const document = buildDocument();
+    const document = buildAppDocument();
     const instance = initApp(document, fetcher);
 
     expect(instance).not.toBeNull();
@@ -97,7 +69,7 @@ describe("app wiring", () => {
   });
 
   it("handles missing optional fields", () => {
-    const document = buildDocument();
+    const document = buildAppDocument();
     document.getElementById("youtube_url").remove();
     const instance = initApp(document, fetcher);
 
@@ -105,11 +77,9 @@ describe("app wiring", () => {
   });
 
   it("uses data-youtube-vol when clicking youtube link", async () => {
-    const document = buildDocument();
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      `<a href="#" data-youtube-key="tv" data-youtube-vol="20">TV YouTube</a>`,
-    );
+    const document = buildAppDocument({
+      extraHtml: `<a href="#" data-youtube-key="tv" data-youtube-vol="20">TV YouTube</a>`,
+    });
     const instance = initApp(document, fetcher);
 
     wireEvents(document, fetcher, instance);
@@ -121,7 +91,7 @@ describe("app wiring", () => {
   });
 
   it("skips latest fetch when status cells missing", async () => {
-    const document = buildDocument();
+    const document = buildAppDocument();
     document.getElementById("Date").remove();
     const instance = initApp(document, fetcher);
 
@@ -137,7 +107,7 @@ describe("app wiring", () => {
     vi.useFakeTimers();
     const now = new Date("2025-12-31T10:20:00Z");
     vi.setSystemTime(now);
-    const document = buildDocument();
+    const document = buildAppDocument();
 
     initApp(document, fetcher);
 
@@ -150,7 +120,7 @@ describe("app wiring", () => {
   });
 
   it("builds alarm options when missing", () => {
-    const document = buildDocument();
+    const document = buildAppDocument();
     document.getElementById("hour").innerHTML = "";
     document.getElementById("min").innerHTML = "";
 
@@ -162,11 +132,9 @@ describe("app wiring", () => {
 
   it("executes data-api commands sequentially with delays", async () => {
     vi.useFakeTimers();
-    const document = buildDocument();
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      `<a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>`,
-    );
+    const document = buildAppDocument({
+      extraHtml: `<a href="#" data-api='[["hue","lights","off"],["hue","lights","10","off"]]'>API</a>`,
+    });
     const instance = initApp(document, fetcher);
 
     wireEvents(document, fetcher, instance);
@@ -183,8 +151,7 @@ describe("app wiring", () => {
   });
 
   it("does not clear voice text on fetch failure", async () => {
-    const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const document = buildDocument();
+    const document = buildAppDocument();
     const error = new Error("network");
     const failingFetcher = vi.fn().mockRejectedValue(error);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -204,8 +171,7 @@ describe("app wiring", () => {
   });
 
   it("reports on network failure", async () => {
-    const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const document = buildDocument();
+    const document = buildAppDocument();
     const error = new Error("network");
     const failingFetcher = vi.fn().mockRejectedValue(error);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -225,11 +191,9 @@ describe("app wiring", () => {
 });
 
 describe("app bootstrap", () => {
-  const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
-
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
-    const document = buildDocument();
+    const document = buildAppDocument();
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       text: vi
@@ -287,7 +251,7 @@ describe("app bootstrap", () => {
 
   it("backs off status polling on failures", async () => {
     vi.useFakeTimers();
-    const document = buildDocument();
+    const document = buildAppDocument();
     const onSchedule = vi.fn();
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const stop = scheduleLatestFetch(
@@ -312,7 +276,7 @@ describe("app bootstrap", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const abortError = new Error("aborted");
     abortError.name = "AbortError";
-    const stop = scheduleLatestFetch(buildDocument(), () => Promise.reject(abortError), { onSchedule });
+    const stop = scheduleLatestFetch(buildAppDocument(), () => Promise.reject(abortError), { onSchedule });
 
     await Promise.resolve();
 
@@ -327,7 +291,7 @@ describe("app bootstrap", () => {
   it("restarts polling after scheduled interval", async () => {
     vi.useFakeTimers();
     const fetchLatest = vi.fn().mockResolvedValue(null);
-    const stop = scheduleLatestFetch(buildDocument(), fetchLatest);
+    const stop = scheduleLatestFetch(buildAppDocument(), fetchLatest);
 
     await Promise.resolve();
     await vi.advanceTimersByTimeAsync(10 * 60 * 1000);

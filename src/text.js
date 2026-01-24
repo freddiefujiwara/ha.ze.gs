@@ -1,3 +1,11 @@
+/**
+ * @returns {{
+ *   normalizeText: (value: unknown) => string,
+ *   sanitizeText: (value: unknown) => string,
+ *   getMaxEncodedLength: (maxText: unknown) => number,
+ *   isTextTooLong: (value: unknown, maxText: unknown) => boolean
+ * }}
+ */
 export const createTextUtils = () => {
   const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
   const sanitizeText = (value) => encodeURIComponent(normalizeText(value));

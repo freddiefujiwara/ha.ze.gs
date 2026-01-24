@@ -1,6 +1,21 @@
 import { ERROR_MESSAGES, STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
 import { reportError } from "./notify.js";
 
+/**
+ * @param {{
+ *   statusScriptUrl?: string,
+ *   statusCallback?: string,
+ *   statusKeys?: Array<string>,
+ *   reportError?: (doc: Document, message: string, details?: unknown) => void
+ * }} [options]
+ * @returns {{
+ *   buildStatusUrl: (params?: Record<string, string>) => string,
+ *   parseLatestPayload: (doc: Document, payload: string) => Record<string, unknown> | null,
+ *   fetchLatestStatus: (doc: Document, fetcher: typeof fetch, options?: { signal?: AbortSignal }) => Promise<Record<string, unknown> | null>,
+ *   updateStatusCells: (latest: Record<string, unknown>, elements: Record<string, HTMLElement>) => void,
+ *   statusCellKeys: Array<string>
+ * }}
+ */
 export const createStatusService = ({
   statusScriptUrl = STATUS_SCRIPT_URL,
   statusCallback = STATUS_CALLBACK,
@@ -107,6 +122,15 @@ const defaultStatusService = createStatusService();
 
 export const { buildStatusUrl, parseLatestPayload, fetchLatestStatus, updateStatusCells } = defaultStatusService;
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   statusCells: Record<string, HTMLElement>,
+ *   hasStatus?: boolean,
+ *   statusService?: ReturnType<typeof createStatusService>
+ * }} params
+ */
 export const createStatusController = ({
   doc,
   fetcher,

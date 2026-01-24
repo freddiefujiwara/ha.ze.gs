@@ -1,5 +1,12 @@
 import { API_BASE_URL, ERROR_MESSAGES, YOUTUBE_HOSTS } from "./constants.js";
 
+/**
+ * @param {{ apiBaseUrl?: string, youtubeHosts?: Set<string> }} [options]
+ * @returns {{
+ *   parseYouTubeId: (youtubeUrl: string) => string | null,
+ *   buildYouTubePlayUrl: (host: string, youtubeUrl: string, volume?: string | number) => string | null
+ * }}
+ */
 export const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts = YOUTUBE_HOSTS } = {}) => {
   const parseYouTubeId = (youtubeUrl) => {
     if (!youtubeUrl) {
@@ -56,6 +63,15 @@ const defaultYouTubeService = createYouTubeService();
 
 export const { parseYouTubeId, buildYouTubePlayUrl } = defaultYouTubeService;
 
+/**
+ * @param {{
+ *   doc: Document,
+ *   fetcher: typeof fetch,
+ *   notifier?: { reportError?: (doc: Document, message: string, details?: unknown) => void },
+ *   elements: { youtubeUrl?: HTMLInputElement },
+ *   buildYouTubePlayUrl?: (host: string, youtubeUrl: string, volume?: string | number) => string | null
+ * }} params
+ */
 export const createYouTubeController = ({
   doc,
   fetcher,

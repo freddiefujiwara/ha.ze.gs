@@ -45,19 +45,20 @@ describe("rewriteLinksForNoJs", () => {
 });
 
 describe("applyHtmlTransforms", () => {
-  it("returns the original href when url is already included", () => {
-    const href = "http://a.ze.gs/path?url=http://ha.ze.gs";
-    expect(appendSourceUrl(href)).toBe(href);
-  });
-
-  it("appends the source url when no query string is present", () => {
-    expect(appendSourceUrl("http://a.ze.gs/path")).toBe("http://a.ze.gs/path?url=http://ha.ze.gs");
-  });
-
-  it("appends the source url using ampersand when a query exists", () => {
-    expect(appendSourceUrl("http://a.ze.gs/path?mode=on")).toBe(
+  it.each([
+    [
+      "returns the original href when url is already included",
+      "http://a.ze.gs/path?url=http://ha.ze.gs",
+      "http://a.ze.gs/path?url=http://ha.ze.gs",
+    ],
+    ["appends the source url when no query string is present", "http://a.ze.gs/path", "http://a.ze.gs/path?url=http://ha.ze.gs"],
+    [
+      "appends the source url using ampersand when a query exists",
+      "http://a.ze.gs/path?mode=on",
       "http://a.ze.gs/path?mode=on&url=http://ha.ze.gs",
-    );
+    ],
+  ])("%s", (_, href, expected) => {
+    expect(appendSourceUrl(href)).toBe(expected);
   });
 
   it("applies transforms in order", () => {

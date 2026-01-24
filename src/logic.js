@@ -14,8 +14,17 @@ import { buildCarArrivalArgs, buildVoiceUrls, createVoiceController, updateVoice
 import { buildYouTubePlayUrl, createYouTubeController, parseYouTubeId } from "./youtube.js";
 
 const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+/**
+ * @param {Document} doc
+ * @param {Array<string>} ids
+ * @returns {Record<string, HTMLElement | null>}
+ */
 const getRequiredElements = (doc, ids) => Object.fromEntries(ids.map((id) => [id, doc.getElementById(id)]));
 
+/**
+ * @param {string} value
+ * @returns {Array<Array<string | number>>}
+ */
 const parseApiCommands = (value) => {
   if (!value) return [];
   let parsed;
@@ -52,6 +61,26 @@ export {
   DEVICE_HOSTS,
 };
 
+/**
+ * @param {Document} doc
+ * @returns {{
+ *   hasRequired: boolean,
+ *   hasStatus: boolean,
+ *   requiredElements: Record<string, HTMLElement | null>,
+ *   statusCells: Record<string, HTMLElement | null>,
+ *   elements: {
+ *     voicetext: HTMLInputElement | null,
+ *     speak: HTMLElement | null,
+ *     speakTatami: HTMLElement | null,
+ *     hour: HTMLSelectElement | null,
+ *     min: HTMLSelectElement | null,
+ *     alarmtext: HTMLInputElement | null,
+ *     setButton: HTMLElement | null,
+ *     youtubeUrl: HTMLInputElement | null,
+ *     statusCells: Record<string, HTMLElement | null>
+ *   }
+ * }}
+ */
 const createAppState = (doc) => {
   const requiredElements = getRequiredElements(doc, REQUIRED_IDS);
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
@@ -78,7 +107,16 @@ const createAppState = (doc) => {
   };
 };
 
-
+/**
+ * @param {Document} doc
+ * @param {typeof fetch} [fetcher]
+ * @returns {{
+ *   setAlarm: () => Promise<boolean>,
+ *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
+ *   fetchLatest: (signal?: AbortSignal) => Promise<Record<string, unknown> | null>,
+ *   elements: ReturnType<typeof createAppState>["elements"]
+ * } | null}
+ */
 export const initApp = (doc, fetcher = fetch) => {
   const state = createAppState(doc);
   if (!state.hasRequired) return null;
