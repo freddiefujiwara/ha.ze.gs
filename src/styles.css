@@ -232,12 +232,27 @@ th {
     background: var(--surface-elevated);
   }
 
+  .stack-table tr.compact {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+  }
+
   .stack-table td {
     border: none;
     padding: 4px 0;
     width: 100%;
     display: block;
     text-align: left;
+  }
+
+  .stack-table tr.compact td {
+    width: auto;
+    display: flex;
+    padding: 0;
   }
 
   .stack-table td[data-label="Device"] {
@@ -247,6 +262,13 @@ th {
     margin-bottom: 8px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
+  }
+
+  .stack-table tr.compact td[data-label="Device"] {
+    font-size: 1rem;
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   .stack-table td::before {

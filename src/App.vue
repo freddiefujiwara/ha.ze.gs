@@ -43,7 +43,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr class="compact">
           <td id="Living" data-label="Device">Living</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -52,7 +52,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Dining" data-label="Device">Dining</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -61,7 +61,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Tatami" data-label="Device">Tatami</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -70,7 +70,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Downright" data-label="Device">Down right</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -79,7 +79,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Downleft" data-label="Device">Down left</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -88,7 +88,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Downback" data-label="Device">Down back</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -97,7 +97,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Washroom" data-label="Device">Washroom</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -106,7 +106,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Bathroom" data-label="Device">Bathroom</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -115,7 +115,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Corridor" data-label="Device">Corridor</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -124,7 +124,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Restroom" data-label="Device">Restroom</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -133,7 +133,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="VoiceChange" data-label="Device">Voice Change</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -142,7 +142,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="AC" data-label="Device">
             <a href="#" data-status-action="control">A/C</a>
           </td>
@@ -169,7 +169,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="TatamiAC" data-label="Device">Tatami A/C</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -179,7 +179,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td data-label="Device">Tool</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -192,7 +192,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Fan" data-label="Device">Fan</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -202,7 +202,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="NW" data-label="Device">Nest WiFi</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -212,7 +212,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="TW" data-label="Device">Tatami WiFi</td>
           <td data-label="Actions">
             <div class="control-group">
@@ -222,7 +222,7 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="CC" data-label="Device">TV</td>
           <td data-label="Actions">
             <div class="control-group">
