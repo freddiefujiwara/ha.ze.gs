@@ -1,20 +1,20 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `src/` holds the static app: `index.html`, `styles.css`, and ES module files (`app.js`, `logic.js`, and feature helpers like `status.js`, `voice.js`).
+- `src/` holds the Vue app: `App.vue`, `styles.css`, and ES module files (`app.js`, `logic.js`, and feature helpers like `status.js`, `voice.js`).
 - `tests/` contains Vitest unit tests named `*.test.js`, generally mirroring the modules in `src/`.
-- `build.js` assembles a single-file deployable page by inlining CSS/JS into `dist/index.html`.
+- `index.html` (root) is the entry point for Vite.
 - `.github/workflows/` defines CI and deploy steps.
 
 ## Build, Test, and Development Commands
+- `npm run dev`: starts the Vite development server.
 - `npm test`: runs Vitest in CI mode with coverage enabled (see `vitest.config.js`).
-- `npm run build`: generates `dist/index.html` by inlining assets and applying no-JS link transforms.
-- There is no dev server; open `src/index.html` directly for quick local checks.
+- `npm run build`: generates a single-file `dist/index.html` using Vite and `vite-plugin-singlefile`.
 
 ## Coding Style & Naming Conventions
 - ES modules only (`"type": "module"`); use `import`/`export` and keep modules small and focused.
 - Follow existing formatting: 2-space indentation, semicolons, and double-quoted strings.
-- File naming is lower-case with hyphens where needed (`build-utils.js`, `youtube.js`).
+- File naming is lower-case with hyphens where needed (`constants.js`, `youtube.js`).
 
 ## Testing Guidelines
 - Framework: Vitest with `jsdom` environment.

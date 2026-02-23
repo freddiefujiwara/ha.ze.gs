@@ -35,6 +35,19 @@ describe("parseApiCommands", () => {
     expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.INVALID_DATA_API, "invalid");
     errorSpy.mockRestore();
   });
+
+  it("wraps single command in an array", () => {
+    const command = '["hue", "lights", "on"]';
+    expect(parseApiCommands(command)).toEqual([["hue", "lights", "on"]]);
+  });
+
+  it("returns multiple commands as is", () => {
+    const commands = '[["hue", "lights", "on"], ["hue", "lights", "off"]]';
+    expect(parseApiCommands(commands)).toEqual([
+      ["hue", "lights", "on"],
+      ["hue", "lights", "off"],
+    ]);
+  });
 });
 
 import { initApp } from "../src/logic.js";
