@@ -1,52 +1,58 @@
 # ha.ze.gs
 
-This is a small web page to control home devices and show simple status values.
+This is a small web app for home control.
+It uses Vue 3 and Vite.
+Build output is one file: `dist/index.html`.
 
-## What it does
-- Shows a control table for lights, air conditioner, speakers, and tools.
-- Lets you send voice text to speakers.
-- Plays YouTube on a selected device.
-- Sets an alarm time with a message.
-- Shows the latest date/time, temperature, and humidity.
-- Shows a toast notification on errors.
+## Tech stack
+- Vue 3 (Composition API)
+- Vite
+- vite-plugin-singlefile
+- Vitest with jsdom
+- JavaScript (no TypeScript)
 
-## Files
-- `src/index.html`: the page layout (table UI).
-- `src/styles.css`: the page styles.
-- `src/app.js`: wires the DOM and exposes browser globals.
-- `src/logic.js`: app glue that re-exports the modules used by `app.js`.
-- `src/constants.js`: shared constants.
-- `src/notify.js`: toast notification handler.
-- `src/alarm.js`: alarm URL builder.
-- `src/hosts.js`: API base URL + host resolution helpers.
-- `src/status.js`: status polling/parsing and status cell updates.
-- `src/text.js`: shared text sanitization.
-- `src/voice.js`: voice URL builders and link updates.
-- `src/youtube.js`: YouTube URL parsing and playback URL builder.
-- `src/build-utils.js`: build-time HTML transforms (no-JS link rewriting).
-- `build.js`: creates a single-file `dist/index.html` with inlined CSS/JS.
+## Main files
+- `index.html`: Vite entry
+- `src/main.js`: starts Vue
+- `src/App.vue`: UI template
+- `src/*.js`: app logic modules
+- `src/styles.css`: styles
+- `vite.config.js`: Vite config
+- `tests/*.test.js`: unit tests
 
-## Development
-Install dependencies and run tests:
-
+## Install
 ```bash
 npm install
+```
+
+## Test
+```bash
 npm test
 ```
 
 ## Build
-Create a single HTML file with inlined CSS and JS:
-
 ```bash
 npm run build
 ```
 
-The output is written to `dist/index.html`.
+Output:
+- `dist/index.html` (CSS and JS are inlined)
 
-### No-JS behavior
-During build, links with `data-*` attributes are converted to `<API>` URLs
-in `dist/index.html` so text-only/no-JS browsers can use them. When JavaScript runs,
-all anchor `href`s are reset to `#` and handled via event listeners.
+## Migration steps
+1. Move old HTML UI from `src/index.html` to `src/App.vue`.
+2. Keep existing DOM logic in `src/*.js`.
+3. Mount Vue from `src/main.js`.
+4. Run build with `vite build`.
+5. Keep all old `id` and `data-*` attributes for compatibility.
+
+## Notes
+- If you use images/files, inline them if you want one true single HTML file.
+- Avoid dynamic imports for single-file output.
+- External API URLs are not inlined.
 
 ## Deploy
-GitHub Actions runs tests and builds the site, then deploys `dist/` to GitHub Pages.
+CI should run:
+- `npm test`
+- `npm run build`
+
+Then deploy `dist/`.
