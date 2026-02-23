@@ -138,11 +138,17 @@ export const start = (doc = document, fetcher = fetch) => {
   return instance;
 };
 
-if (typeof window !== "undefined") {
-  const instance = start(document, fetch);
+export const bootstrapBrowser = (doc = document, fetcher = fetch) => {
+  if (typeof window === "undefined") return null;
+  const instance = start(doc, fetcher);
   window.api = (args) => {
-    fetch(apiUrl(args));
+    fetcher(apiUrl(args));
   };
   window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
+  return instance;
+};
+
+if (typeof window !== "undefined") {
+  bootstrapBrowser(document, fetch);
 }
