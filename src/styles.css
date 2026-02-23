@@ -157,8 +157,14 @@ th {
   font-weight: 600;
 }
 
-/* Customizing links in table to look like buttons */
-.stack-table td a {
+.control-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.control-group a {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 6px;
@@ -170,7 +176,7 @@ th {
   transition: all 0.2s;
 }
 
-.stack-table td a:hover {
+.control-group a:hover {
   border-color: var(--link);
   color: var(--link-active);
 }
@@ -222,31 +228,29 @@ th {
     border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 10px;
-    padding: 4px 8px;
+    padding: 12px;
     background: var(--surface-elevated);
   }
 
   .stack-table td {
-    border-bottom: 1px dashed var(--border);
-    white-space: normal;
-    word-break: break-word;
-    padding: 8px 4px;
-    display: grid;
-    grid-template-columns: 7.5em 1fr;
-    gap: 8px;
-    align-items: start;
-    text-align: right;
+    border: none;
+    padding: 4px 0;
+    width: 100%;
+    display: block;
+    text-align: left;
   }
 
-  .stack-table td:last-child {
-    border-bottom: 0;
+  .stack-table td[data-label="Device"] {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
   }
 
   .stack-table td::before {
-    content: attr(data-label);
-    color: var(--muted);
-    font-weight: 600;
-    text-align: left;
+    content: none !important;
   }
 }
 
@@ -259,7 +263,14 @@ input {
   background: var(--surface-elevated);
   color: var(--text);
   font: inherit;
-  width: 100%;
+  width: auto;
+  min-width: 120px;
+}
+
+textarea {
+  min-width: 200px;
+  height: 40px;
+  resize: vertical;
 }
 
 textarea:focus,
