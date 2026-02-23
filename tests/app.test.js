@@ -336,7 +336,8 @@ describe("app bootstrap", () => {
       });
 
     vi.stubGlobal("fetch", fetcher);
-    await import("../src/app.js");
+    const { bootstrapBrowser } = await import("../src/app.js");
+    bootstrapBrowser(document, fetcher);
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));

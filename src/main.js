@@ -1,6 +1,10 @@
-import { createApp } from "vue";
+import { createApp, nextTick } from "vue";
 import App from "./App.vue";
-import "./app.js";
+import { bootstrapBrowser } from "./app.js";
 import "./styles.css";
 
 createApp(App).mount("#app");
+
+nextTick(() => {
+  bootstrapBrowser(document, fetch);
+});

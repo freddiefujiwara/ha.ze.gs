@@ -148,7 +148,3 @@ export const bootstrapBrowser = (doc = document, fetcher = fetch) => {
   window.youtubePlay = (host) => instance?.youtubePlay(host);
   return instance;
 };
-
-if (typeof window !== "undefined") {
-  bootstrapBrowser(document, fetch);
-}
