@@ -274,6 +274,11 @@ th {
   .stack-table td::before {
     content: none !important;
   }
+
+  .control-group textarea {
+    width: 100%;
+    flex-basis: 100%;
+  }
 }
 
 textarea,
