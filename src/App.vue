@@ -143,11 +143,10 @@
           </td>
         </tr>
         <tr class="compact">
-          <td id="AC" data-label="Device">
-            <a href="#" data-status-action="control">A/C</a>
-          </td>
+          <td id="AC" data-label="Device">A/C</td>
           <td data-label="Actions">
             <div class="control-group">
+              <a href="#" data-status-action="control">Sync</a>
               <a
                 href="#"
                 data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,2,1,on"]'
@@ -233,10 +232,11 @@
           </td>
         </tr>
         <tr>
-          <td id="YouTube" data-label="Device"><a href="#" data-youtube-key="tv" data-youtube-vol="20">YouTube</a></td>
+          <td id="YouTube" data-label="Device">YouTube</td>
           <td data-label="Actions">
             <div class="control-group">
               <textarea id="youtube_url" placeholder="YouTube URL"></textarea>
+              <a href="#" data-youtube-key="tv" data-youtube-vol="20">TV</a>
               <a href="#" data-youtube-key="nest">Nest Wifi</a>
               <a href="#" data-youtube-key="tatami">Tatami WiFi</a>
             </div>
