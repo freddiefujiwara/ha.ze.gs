@@ -146,7 +146,7 @@
           <td id="AC" data-label="Device">A/C</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-status-action="control">Sync</a>
+              <a href="#" data-status-action="control">Ctrl</a>
               <a
                 href="#"
                 data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,2,1,on"]'
