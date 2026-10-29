@@ -198,6 +198,7 @@
               <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","turnOn"]'>On</a>
               <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","turnOff"]'>Off</a>
               <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","setWindSpeed","-p","100"]'>Turbo</a>
+              <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","setWindSpeed","-p","11"]'>Normal</a>
             </div>
           </td>
         </tr>
