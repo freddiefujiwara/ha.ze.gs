@@ -195,9 +195,8 @@
           <td id="Fan" data-label="Device">Fan</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["switchbot-command","-d","03-202401251013-89002900","-c","turnOn"]'>On/Off</a>
-              <a href="#" data-api='["switchbot-command","-d","03-202401251013-89002900","-c","highSpeed"]'>Turbo</a>
-              <a href="#" data-api='["switchbot-command","-d","03-202401251013-89002900","-c","swing"]'>Swing</a>
+              <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","turnOn"]'>On</a>
+              <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","turnOff"]'>Off</a>
             </div>
           </td>
         </tr>
