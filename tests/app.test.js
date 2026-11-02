@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ERROR_MESSAGES, MAX_TEXT } from "../src/constants.js";
+import { ERROR_MESSAGES } from "../src/constants.js";
 import { apiUrl, buildCarArrivalArgs, buildStatusUrl, initApp } from "../src/logic.js";
 import { scheduleLatestFetch, wireEvents } from "../src/app.js";
-import { buildAppDocument, flushPromises, hourOptions, minOptions } from "./test-helpers.js";
+import { buildAppDocument, flushPromises } from "./test-helpers.js";
 
 vi.mock("../src/notify.js", () => ({
   notify: vi.fn(),
@@ -41,14 +41,6 @@ describe("app wiring", () => {
     document.getElementById("voicetext").dispatchEvent(new Event("input"));
 
     expect(document.getElementById("speak").dataset.url).toContain("-s/hello");
-
-    document.getElementById("hour").value = "08";
-    document.getElementById("min").value = "15";
-    document.getElementById("alarmtext").value = "wake";
-    await instance.setAlarm();
-    expect(fetcher).toHaveBeenCalledWith(
-      "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec?time=08:15:00&text=wake",
-    );
 
     document.getElementById("youtube_url").value = "https://youtu.be/abc123";
     await instance.youtubePlay("192.168.1.22");
@@ -101,33 +93,6 @@ describe("app wiring", () => {
   it("returns null when required nodes missing", () => {
     const document = window.document.implementation.createHTMLDocument("test");
     expect(initApp(document, fetcher)).toBeNull();
-  });
-
-  it("defaults alarm selectors to local time", () => {
-    vi.useFakeTimers();
-    const now = new Date("2025-12-31T10:20:00Z");
-    vi.setSystemTime(now);
-    const document = buildAppDocument();
-
-    initApp(document, fetcher);
-
-    const expectedHour = String(now.getHours()).padStart(2, "0");
-    const expectedMinute = String(now.getMinutes()).padStart(2, "0");
-    expect(document.getElementById("hour").value).toBe(expectedHour);
-    expect(document.getElementById("min").value).toBe(expectedMinute);
-
-    vi.useRealTimers();
-  });
-
-  it("builds alarm options when missing", () => {
-    const document = buildAppDocument();
-    document.getElementById("hour").innerHTML = "";
-    document.getElementById("min").innerHTML = "";
-
-    initApp(document, fetcher);
-
-    expect(document.getElementById("hour").options).toHaveLength(24);
-    expect(document.getElementById("min").options).toHaveLength(60);
   });
 
   it("executes data-api commands sequentially with delays", async () => {
@@ -193,7 +158,9 @@ describe("app wiring", () => {
 describe("app bootstrap", () => {
   it("wires anchors and buttons in start", async () => {
     vi.resetModules();
-    const document = buildAppDocument();
+    const document = buildAppDocument({
+      extraHtml: `<a class="plain-link" href="https://example.com/">Plain</a><a href="https://freddiefujiwara.com/alarm/" data-external>Alarm</a>`,
+    });
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       text: vi
@@ -213,16 +180,10 @@ describe("app bootstrap", () => {
     youtubeInput.dispatchEvent(new Event("blur"));
     expect(youtubeInput.value).toBe("");
 
-    document.getElementById("alarmtext").value = "wake";
-    document.getElementById("set").dispatchEvent(new Event("click"));
-    await flushPromises();
-    expect(document.getElementById("alarmtext").value).toBe("");
-
-    const tooLongText = `${MAX_TEXT}a`;
-    document.getElementById("alarmtext").value = tooLongText;
-    document.getElementById("set").dispatchEvent(new Event("click"));
-    await flushPromises();
-    expect(document.getElementById("alarmtext").value).toBe(tooLongText);
+    expect(document.querySelector("a.plain-link").getAttribute("href")).toBe("#");
+    expect(document.querySelector("a[data-external]").getAttribute("href")).toBe(
+      "https://freddiefujiwara.com/alarm/",
+    );
 
     document.getElementById("youtube_url").value = "https://youtu.be/xyz";
     document.querySelector("a[data-youtube-host]").dispatchEvent(new Event("click"));
@@ -310,10 +271,6 @@ describe("app bootstrap", () => {
       <textarea id="voicetext"></textarea>
       <a id="speak" href="#">Nest Wifi</a>
       <a id="speak_tatami" href="#">Tatami</a>
-      <select id="hour">${hourOptions}</select>
-      <select id="min">${minOptions}</select>
-      <textarea id="alarmtext"></textarea>
-      <a id="set" href="#">Set</a>
       <textarea id="youtube_url"></textarea>
       <div id="AirCondition"></div>
       <div id="Date"></div>
@@ -350,7 +307,6 @@ describe("app bootstrap", () => {
     await vi.advanceTimersByTimeAsync(200);
 
     window.api(["hue", "lights", "on"]);
-    window.setAlarm();
     window.youtubePlay("192.168.1.22");
 
     expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");

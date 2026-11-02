@@ -130,43 +130,11 @@ describe("initApp", () => {
     errorSpy.mockRestore();
   });
 
-  it.skip("reports and logs when alarm text is too long", async () => {
-    const elements = {
-      voicetext: { addEventListener: vi.fn(), value: "" },
-      speak: { addEventListener: vi.fn() },
-      speak_tatami: { addEventListener: vi.fn() },
-      hour: { addEventListener: vi.fn(), value: "10", options: [], querySelector: () => null },
-      min: { addEventListener: vi.fn(), value: "10", options: [], querySelector: () => null },
-      alarmtext: { addEventListener: vi.fn(), value: "a".repeat(200) },
-      set: { addEventListener: vi.fn() },
-      youtube_url: { addEventListener: vi.fn(), value: "" },
-      AirCondition: {},
-      Date: {},
-      Temperature: {},
-      Humid: {},
-    };
-    const doc = {
-      getElementById: (id) => elements[id],
-      querySelectorAll: () => [],
-    };
-    const { reportError } = await import("../src/notify.js");
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const instance = initApp(doc, fetch);
-    await instance.setAlarm();
-    expect(reportError).toHaveBeenCalledWith(doc, ERROR_MESSAGES.TOO_LONG, "a".repeat(200));
-    expect(errorSpy).toHaveBeenCalledWith(ERROR_MESSAGES.TOO_LONG, "a".repeat(200));
-    errorSpy.mockRestore();
-  });
-
   it("reports when voice text is too long", async () => {
     const elements = {
       voicetext: { addEventListener: vi.fn(), value: `${MAX_TEXT}a` },
       speak: { addEventListener: vi.fn(), dataset: {}, removeAttribute: vi.fn() },
       speak_tatami: { addEventListener: vi.fn(), dataset: {}, removeAttribute: vi.fn() },
-      hour: { addEventListener: vi.fn(), value: "10", options: [], querySelector: () => null },
-      min: { addEventListener: vi.fn(), value: "10", options: [], querySelector: () => null },
-      alarmtext: { addEventListener: vi.fn(), value: "wake" },
-      set: { addEventListener: vi.fn() },
       youtube_url: { addEventListener: vi.fn(), value: "" },
       AirCondition: {},
       Date: {},
