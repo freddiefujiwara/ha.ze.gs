@@ -253,17 +253,11 @@
             </div>
           </td>
         </tr>
-        <tr>
+        <tr class="compact">
           <td id="Alarm" data-label="Device">Alarm</td>
           <td data-label="Actions">
             <div class="control-group">
-              <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                <select id="hour"></select>
-                <span>:</span>
-                <select id="min"></select>
-              </div>
-              <textarea id="alarmtext" placeholder="Alarm text"></textarea>
-              <a id="set" href="#">Set</a>
+              <a href="https://freddiefujiwara.com/alarm/" target="_blank" rel="noopener" data-external>freddiefujiwara.com/alarm</a>
             </div>
           </td>
         </tr>

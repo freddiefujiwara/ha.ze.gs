@@ -1,4 +1,3 @@
-import { createAlarmController } from "./alarm.js";
 import { ERROR_MESSAGES } from "./constants.js";
 import { apiUrl, replaceHostTokens, resolveHost } from "./hosts.js";
 import { reportError } from "./notify.js";
@@ -6,7 +5,7 @@ import { STATUS_CELL_KEYS, buildStatusUrl, createStatusController } from "./stat
 import { buildCarArrivalArgs, createVoiceController } from "./voice.js";
 import { createYouTubeController, parseYouTubeId } from "./youtube.js";
 
-const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami", "hour", "min", "alarmtext", "set"];
+const REQUIRED_IDS = ["voicetext", "speak", "speak_tatami"];
 /**
  * @param {Document} doc
  * @param {Array<string>} ids
@@ -57,10 +56,6 @@ export {
  *     voicetext: HTMLInputElement | null,
  *     speak: HTMLElement | null,
  *     speakTatami: HTMLElement | null,
- *     hour: HTMLSelectElement | null,
- *     min: HTMLSelectElement | null,
- *     alarmtext: HTMLInputElement | null,
- *     setButton: HTMLElement | null,
  *     youtubeUrl: HTMLInputElement | null,
  *     statusCells: Record<string, HTMLElement | null>
  *   }
@@ -71,7 +66,7 @@ const createAppState = (doc) => {
   const statusCells = getRequiredElements(doc, STATUS_CELL_KEYS);
   const missingRequired = Object.values(requiredElements).some((element) => !element);
   const missingStatus = Object.values(statusCells).some((element) => !element);
-  const { voicetext, speak, speak_tatami: speakTatami, hour, min, alarmtext, set: setButton } = requiredElements;
+  const { voicetext, speak, speak_tatami: speakTatami } = requiredElements;
   const youtubeUrl = doc.getElementById("youtube_url");
   return {
     hasRequired: !missingRequired,
@@ -82,10 +77,6 @@ const createAppState = (doc) => {
       voicetext,
       speak,
       speakTatami,
-      hour,
-      min,
-      alarmtext,
-      setButton,
       youtubeUrl,
       statusCells,
     },
@@ -96,7 +87,6 @@ const createAppState = (doc) => {
  * @param {Document} doc
  * @param {typeof fetch} [fetcher]
  * @returns {{
- *   setAlarm: () => Promise<boolean>,
  *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
  *   fetchLatest: (signal?: AbortSignal) => Promise<Record<string, unknown> | null>,
  *   elements: ReturnType<typeof createAppState>["elements"]
@@ -107,7 +97,6 @@ export const initApp = (doc, fetcher = fetch) => {
   if (!state.hasRequired) return null;
 
   const notifier = { reportError };
-  const alarmController = createAlarmController({ doc, fetcher, notifier, elements: state.elements });
   const voiceController = createVoiceController({ doc, elements: state.elements, notifier });
   const youtubeController = createYouTubeController({ doc, fetcher, notifier, elements: state.elements });
   const statusController = createStatusController({
@@ -117,11 +106,9 @@ export const initApp = (doc, fetcher = fetch) => {
     hasStatus: state.hasStatus,
   });
 
-  alarmController.setDefaults();
   voiceController.bindInput();
 
   return {
-    setAlarm: alarmController.setAlarm,
     youtubePlay: youtubeController.youtubePlay,
     fetchLatest: statusController.fetchLatest,
     elements: state.elements,

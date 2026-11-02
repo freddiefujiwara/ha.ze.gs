@@ -6,9 +6,6 @@ export const STATUS_BACKOFF_MS = 60 * 1000;
 export const MAX_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 
-export const ALARM_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyGtgeNC_rHFxPvSj7XjO5GdM6awoqlxJ7PDmfcadghjZshQ8Y/exec";
-
 export const API_BASE_URL = "http://a.ze.gs";
 
 export const DEVICE_HOSTS = {

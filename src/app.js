@@ -70,11 +70,8 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
  * @param {Document} doc
  * @param {typeof fetch} fetcher
  * @param {{
- *   setAlarm: () => Promise<boolean>,
  *   youtubePlay: (host: string, volume?: string | number) => Promise<Response> | null,
  *   elements: {
- *     setButton: HTMLElement,
- *     alarmtext: HTMLInputElement,
  *     youtubeUrl: HTMLInputElement,
  *     speak: HTMLElement,
  *     speakTatami: HTMLElement,
@@ -83,12 +80,7 @@ const handleDataApi = async (doc, fetcher, dataApi) => {
  * }} instance
  */
 export const wireEvents = (doc, fetcher, instance) => {
-  const { setAlarm, elements } = instance;
-
-  elements.setButton.addEventListener("click", async (event) => {
-    event.preventDefault();
-    if (await setAlarm()) elements.alarmtext.value = "";
-  });
+  const { elements } = instance;
 
   elements.youtubeUrl.addEventListener("blur", () => {
     if (elements.youtubeUrl.value && !parseYouTubeId(elements.youtubeUrl.value)) {
@@ -132,7 +124,7 @@ export const wireEvents = (doc, fetcher, instance) => {
 export const start = (doc = document, fetcher = fetch) => {
   const instance = initApp(doc, fetcher);
   if (!instance) return null;
-  doc.querySelectorAll("a").forEach((link) => link.setAttribute("href", "#"));
+  doc.querySelectorAll("a:not([data-external])").forEach((link) => link.setAttribute("href", "#"));
   scheduleLatestFetch(doc, instance.fetchLatest);
   wireEvents(doc, fetcher, instance);
   return instance;
@@ -144,7 +136,6 @@ export const bootstrapBrowser = (doc = document, fetcher = fetch) => {
   window.api = (args) => {
     fetcher(apiUrl(args));
   };
-  window.setAlarm = () => instance?.setAlarm();
   window.youtubePlay = (host) => instance?.youtubePlay(host);
   return instance;
 };
