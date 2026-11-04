@@ -44,7 +44,7 @@ describe("app wiring", () => {
 
     document.getElementById("youtube_url").value = "https://youtu.be/abc123";
     await instance.youtubePlay("192.168.1.22");
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
 
     const callsBeforeInvalid = fetcher.mock.calls.length;
     document.getElementById("youtube_url").value = "https://example.com/video";
@@ -79,7 +79,7 @@ describe("app wiring", () => {
     document.querySelector("a[data-youtube-vol]").dispatchEvent(new Event("click"));
     await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/youtube-play/-h/192.168.1.219/-v/20/-i/abc123");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/youtube-play/-h/192.168.1.219/-v/20/-i/abc123");
   });
 
   it("skips latest fetch when status cells missing", async () => {
@@ -106,11 +106,11 @@ describe("app wiring", () => {
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
-    expect(fetcher).not.toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/off");
+    expect(fetcher).not.toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
 
     await vi.advanceTimersByTimeAsync(200);
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
 
     vi.useRealTimers();
   });
@@ -309,10 +309,10 @@ describe("app bootstrap", () => {
     window.api(["hue", "lights", "on"]);
     window.youtubePlay("192.168.1.22");
 
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/off");
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
     expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
-    expect(fetcher).toHaveBeenCalledWith("http://a.ze.gs/hue/lights/on");
+    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");
     expect(errorSpy).toHaveBeenCalled();

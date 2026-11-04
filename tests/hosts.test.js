@@ -3,7 +3,7 @@ import { apiUrl, replaceHostTokens, resolveHost } from "../src/hosts.js";
 
 describe("hosts", () => {
   it.each([
-    ["builds api url", () => apiUrl(["hue", "lights", "off"]), "http://a.ze.gs/hue/lights/off"],
+    ["builds api url", () => apiUrl(["hue", "lights", "off"]), "https://a.ze.gs/hue/lights/off"],
     ["resolves host aliases", () => resolveHost("nest"), "192.168.1.22"],
     ["returns host when not aliased", () => resolveHost("192.168.1.99"), "192.168.1.99"],
   ])("%s", (_, fn, expected) => {

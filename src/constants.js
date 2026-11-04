@@ -6,7 +6,7 @@ export const STATUS_BACKOFF_MS = 60 * 1000;
 export const MAX_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 
-export const API_BASE_URL = "http://a.ze.gs";
+export const API_BASE_URL = "https://a.ze.gs";
 
 export const DEVICE_HOSTS = {
   nest: "192.168.1.22",
