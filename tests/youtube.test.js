@@ -22,22 +22,22 @@ describe("youtube", () => {
     [
       "default volume",
       () => buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123"),
-      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+      "https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     ],
     [
       "explicit volume",
       () => buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "20"),
-      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/20/-i/abc123",
+      "https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/20/-i/abc123",
     ],
     [
       "low invalid volume",
       () => buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "-1"),
-      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+      "https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     ],
     [
       "high invalid volume",
       () => buildYouTubePlayUrl("192.168.1.22", "https://youtu.be/abc123", "101"),
-      "http://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
+      "https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123",
     ],
     ["invalid youtube url", () => buildYouTubePlayUrl("192.168.1.22", "https://example.com/watch?v=abc"), null],
   ])("builds youtube play url: %s", (_, fn, expected) => {
