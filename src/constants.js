@@ -6,20 +6,19 @@ export const STATUS_BACKOFF_MS = 60 * 1000;
 export const MAX_TEXT =
   "１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３４５６７８９０１２３4";
 
-export const API_BASE_URL = "https://a.ze.gs";
+import { CONFIG } from "./config.js";
 
-export const DEVICE_HOSTS = {
-  nest: "192.168.1.22",
-  tatami: "192.168.1.236",
-  tv: "192.168.1.219",
-};
+// The home server base URL and the device LAN addresses are build-time
+// configuration (see config.js); they are not written in this repository.
+export const API_BASE_URL = CONFIG.API_BASE_URL;
+export const DEVICE_HOSTS = CONFIG.DEVICE_HOSTS;
 
 export const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";
 export const STATUS_CALLBACK = "__statusCallback";
 export const STATUS_KEYS = ["AirCondition", "Date", "Temperature", "Humid"];
 
-export const VOICE_HOSTS = { speak: DEVICE_HOSTS.nest, speakTatami: DEVICE_HOSTS.tatami };
+export const VOICE_HOSTS = CONFIG.VOICE_HOSTS;
 export const CAR_ARRIVAL_MESSAGE = "チエミさん、ママさん、パパが到着しました。準備をお願いします。";
 
 export const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"]);
