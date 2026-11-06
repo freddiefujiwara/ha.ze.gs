@@ -43,12 +43,12 @@ describe("app wiring", () => {
     expect(document.getElementById("speak").dataset.url).toContain("-s/hello");
 
     document.getElementById("youtube_url").value = "https://youtu.be/abc123";
-    await instance.youtubePlay("192.168.1.22");
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/youtube-play/-h/192.168.1.22/-v/40/-i/abc123");
+    await instance.youtubePlay("192.0.2.10");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/youtube-play/-h/192.0.2.10/-v/40/-i/abc123");
 
     const callsBeforeInvalid = fetcher.mock.calls.length;
     document.getElementById("youtube_url").value = "https://example.com/video";
-    expect(instance.youtubePlay("192.168.1.22")).toBeNull();
+    expect(instance.youtubePlay("192.0.2.10")).toBeNull();
     expect(document.getElementById("youtube_url").value).toBe("");
     expect(fetcher.mock.calls).toHaveLength(callsBeforeInvalid);
 
@@ -65,7 +65,7 @@ describe("app wiring", () => {
     document.getElementById("youtube_url").remove();
     const instance = initApp(document, fetcher);
 
-    expect(instance.youtubePlay("192.168.1.22")).toBeNull();
+    expect(instance.youtubePlay("192.0.2.10")).toBeNull();
   });
 
   it("uses data-youtube-vol when clicking youtube link", async () => {
@@ -79,7 +79,7 @@ describe("app wiring", () => {
     document.querySelector("a[data-youtube-vol]").dispatchEvent(new Event("click"));
     await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/youtube-play/-h/192.168.1.219/-v/20/-i/abc123");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/youtube-play/-h/192.0.2.12/-v/20/-i/abc123");
   });
 
   it("skips latest fetch when status cells missing", async () => {
@@ -106,11 +106,11 @@ describe("app wiring", () => {
     document.querySelector("a[data-api]").dispatchEvent(new Event("click"));
     await Promise.resolve();
 
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/off");
-    expect(fetcher).not.toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/hue/lights/off");
+    expect(fetcher).not.toHaveBeenCalledWith("https://home.example/hue/lights/10/off");
 
     await vi.advanceTimersByTimeAsync(200);
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/hue/lights/10/off");
 
     vi.useRealTimers();
   });
@@ -307,12 +307,12 @@ describe("app bootstrap", () => {
     await vi.advanceTimersByTimeAsync(200);
 
     window.api(["hue", "lights", "on"]);
-    window.youtubePlay("192.168.1.22");
+    window.youtubePlay("192.0.2.10");
 
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/off");
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/10/off");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/hue/lights/off");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/hue/lights/10/off");
     expect(fetcher).toHaveBeenCalledWith(apiUrl(buildCarArrivalArgs()));
-    expect(fetcher).toHaveBeenCalledWith("https://a.ze.gs/hue/lights/on");
+    expect(fetcher).toHaveBeenCalledWith("https://home.example/hue/lights/on");
     expect(fetcher).toHaveBeenCalledWith(buildStatusUrl({ s: "status", t: "control" }));
     expect(document.getElementById("youtube_url").value).toBe("");
     expect(errorSpy).toHaveBeenCalled();

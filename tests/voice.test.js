@@ -7,9 +7,9 @@ const buildDocument = () => window.document.implementation.createHTMLDocument("t
 describe("voice", () => {
   it("builds voice urls", () => {
     const urls = buildVoiceUrls("hello world\n");
-    expect(urls.speak).toContain("https://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.22");
+    expect(urls.speak).toContain("https://home.example/google-home-speaker-wrapper/-h/192.0.2.10");
     expect(urls.speak).toContain("-s/hello%E3%80%80world");
-    expect(urls.speakTatami).toContain("https://a.ze.gs/google-home-speaker-wrapper/-h/192.168.1.236");
+    expect(urls.speakTatami).toContain("https://home.example/google-home-speaker-wrapper/-h/192.0.2.11");
   });
 
   it("updates voice links", () => {
@@ -42,7 +42,7 @@ describe("voice", () => {
   it("builds car arrival args", () => {
     const args = buildCarArrivalArgs();
     expect(args.join("/")).toContain("google-home-speaker-wrapper");
-    expect(args.join("/")).toContain("192.168.1.22");
+    expect(args.join("/")).toContain("192.0.2.10");
   });
 
   it("clears previous voice urls when text is too long", () => {

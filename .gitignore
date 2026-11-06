@@ -6,3 +6,5 @@ package-lock.json
 .codex/
 .gemini/
 .github/skills/
+.env
+.env.local
