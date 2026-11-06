@@ -10,6 +10,7 @@ import {
   resolveHost,
 } from "./logic.js";
 import { reportError } from "./notify.js";
+import { bindTokenSettings, withApiToken } from "./token.js";
 
 /**
  * @param {Document} doc
@@ -132,9 +133,11 @@ export const start = (doc = document, fetcher = fetch) => {
 
 export const bootstrapBrowser = (doc = document, fetcher = fetch) => {
   if (typeof window === "undefined") return null;
-  const instance = start(doc, fetcher);
+  const authedFetcher = withApiToken(fetcher);
+  const instance = start(doc, authedFetcher);
+  bindTokenSettings(doc);
   window.api = (args) => {
-    fetcher(apiUrl(args));
+    authedFetcher(apiUrl(args));
   };
   window.youtubePlay = (host) => instance?.youtubePlay(host);
   return instance;

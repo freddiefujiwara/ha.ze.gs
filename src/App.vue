@@ -265,6 +265,13 @@
     </table>
     </div>
 
+    <div class="token-settings">
+      <label for="api_token">API Token</label>
+      <input id="api_token" type="password" autocomplete="off" placeholder="API token" />
+      <a href="#" id="api_token_save">Save</a>
+      <span id="api_token_state"></span>
+    </div>
+
     <div id="notification-container" aria-live="polite"></div>
   </div>
 </template>
