@@ -182,7 +182,8 @@ th {
 }
 
 .control-group input[type="range"] {
-  width: 120px;
+  flex: 1 1 100%;
+  width: 100%;
   accent-color: var(--link);
 }
 
