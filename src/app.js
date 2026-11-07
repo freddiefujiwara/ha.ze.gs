@@ -96,13 +96,12 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (link.dataset.statusAction) await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
   });
 
-  doc.querySelectorAll("input[data-level-target]").forEach((input) => {
+  doc.querySelectorAll("input[data-level-target], input[data-level-command]").forEach((input) => {
     input.addEventListener("change", async () => {
-      await handleDataApi(
-        doc,
-        fetcher,
-        JSON.stringify(["dirigera-command", "level", input.dataset.levelTarget, input.value]),
-      );
+      const args = input.dataset.levelCommand
+        ? [...JSON.parse(input.dataset.levelCommand), input.value]
+        : ["dirigera-command", "level", input.dataset.levelTarget, input.value];
+      await handleDataApi(doc, fetcher, JSON.stringify(args));
     });
   });
 

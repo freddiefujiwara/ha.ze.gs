@@ -49,6 +49,7 @@
             <div class="control-group">
               <a href="#" data-api='["switchbot-command", "-d", "C70C0516C0C7", "-c", "turnOn"]'>On</a>
               <a href="#" data-api='["switchbot-command", "-d", "C70C0516C0C7", "-c", "turnOff"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","C70C0516C0C7","-c","setBrightness","-p"]' aria-label="Living brightness" />
             </div>
           </td>
         </tr>
@@ -68,6 +69,7 @@
             <div class="control-group">
               <a href="#" data-api='["switchbot-command","-d","ECCC4C8C52C3","-c","turnOn"]'>On</a>
               <a href="#" data-api='["switchbot-command","-d","ECCC4C8C52C3","-c","turnOff"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","ECCC4C8C52C3","-c","setBrightness","-p"]' aria-label="Tatami brightness" />
             </div>
           </td>
         </tr>

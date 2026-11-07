@@ -130,6 +130,23 @@ describe("app wiring", () => {
     expect(fetcher).toHaveBeenCalledWith("https://home.example/dirigera-command/level/dining/40");
   });
 
+  it("sends a switchbot setBrightness command when a data-level-command slider changes", async () => {
+    const document = buildAppDocument({
+      extraHtml: `<input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","DEVICEID","-c","setBrightness","-p"]' />`,
+    });
+    const instance = initApp(document, fetcher);
+
+    wireEvents(document, fetcher, instance);
+    const slider = document.querySelector("input[data-level-command]");
+    slider.value = "40";
+    slider.dispatchEvent(new Event("change"));
+    await flushPromises();
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://home.example/switchbot-command/-d/DEVICEID/-c/setBrightness/-p/40",
+    );
+  });
+
   it("does not clear voice text on fetch failure", async () => {
     const document = buildAppDocument();
     const error = new Error("network");
