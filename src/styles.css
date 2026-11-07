@@ -181,6 +181,11 @@ th {
   color: var(--link-active);
 }
 
+.control-group input[type="range"] {
+  width: 120px;
+  accent-color: var(--link);
+}
+
 .meta {
   color: var(--muted);
   font-size: 0.85em;

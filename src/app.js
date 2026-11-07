@@ -96,6 +96,16 @@ export const wireEvents = (doc, fetcher, instance) => {
     if (link.dataset.statusAction) await fetcher(buildStatusUrl({ s: "status", t: link.dataset.statusAction }));
   });
 
+  doc.querySelectorAll("input[data-level-target]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      await handleDataApi(
+        doc,
+        fetcher,
+        JSON.stringify(["dirigera-command", "level", input.dataset.levelTarget, input.value]),
+      );
+    });
+  });
+
   bindLinkClicks(doc, "a[data-youtube-host], a[data-youtube-key]", async (link) => {
     const host = link.dataset.youtubeHost ?? resolveHost(link.dataset.youtubeKey);
     if (!host) return;
