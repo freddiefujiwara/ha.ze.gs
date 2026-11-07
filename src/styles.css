@@ -182,9 +182,34 @@ th {
 }
 
 .control-group input[type="range"] {
-  flex: 1 1 100%;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 90px;
   accent-color: var(--link);
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--link);
+  cursor: pointer;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--link);
+  cursor: pointer;
 }
 
 .meta {
