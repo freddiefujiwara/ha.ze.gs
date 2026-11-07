@@ -181,9 +181,13 @@ th {
   color: var(--link-active);
 }
 
+.control-group:has(input[type="range"]) {
+  flex-wrap: nowrap;
+}
+
 .control-group input[type="range"] {
   flex: 1 1 auto;
-  min-width: 90px;
+  min-width: 0;
   accent-color: var(--link);
   -webkit-appearance: none;
   appearance: none;
