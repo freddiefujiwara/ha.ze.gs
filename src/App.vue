@@ -6,7 +6,7 @@
         <div class="header-buttons">
           <a
             href="#"
-            data-api='[["hue","lights","off"],["switchbot-command","-d","C70C0516C0C7","-c","turnOff"],["switchbot-command","-d","ECCC4C8C52C3","-c","turnOff"],["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"],["switchbot-custom","-d","03-202401251013-58699638","-c","Off"]]'
+            data-api='[["dirigera-command","off","all"],["switchbot-command","-d","C70C0516C0C7","-c","turnOff"],["switchbot-command","-d","ECCC4C8C52C3","-c","turnOff"],["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"],["switchbot-custom","-d","03-202401251013-58699638","-c","Off"]]'
             data-status-action="control"
             class="btn-pill"
             >Go Out</a
@@ -56,8 +56,9 @@
           <td id="Dining" data-label="Device">Dining</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","13,14,15,28,29","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","13,14,15,28,29","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","dining"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","dining"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="dining" aria-label="Dining brightness" />
             </div>
           </td>
         </tr>
@@ -71,20 +72,12 @@
           </td>
         </tr>
         <tr class="compact">
-          <td id="Downright" data-label="Device">Down right</td>
+          <td id="Down" data-label="Device">Down</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","27","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","27","off"]'>Off</a>
-            </div>
-          </td>
-        </tr>
-        <tr class="compact">
-          <td id="Downleft" data-label="Device">Down left</td>
-          <td data-label="Actions">
-            <div class="control-group">
-              <a href="#" data-api='["hue","lights","26","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","26","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","down"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","down"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="down" aria-label="Down brightness" />
             </div>
           </td>
         </tr>
@@ -92,8 +85,29 @@
           <td id="Downback" data-label="Device">Down back</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","7","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","7","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","downback"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","downback"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="downback" aria-label="Down back brightness" />
+            </div>
+          </td>
+        </tr>
+        <tr class="compact">
+          <td id="Kitchen" data-label="Device">Kitchen</td>
+          <td data-label="Actions">
+            <div class="control-group">
+              <a href="#" data-api='["dirigera-command","on","kitchen"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","kitchen"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="kitchen" aria-label="Kitchen brightness" />
+            </div>
+          </td>
+        </tr>
+        <tr class="compact">
+          <td id="Kids" data-label="Device">Kids</td>
+          <td data-label="Actions">
+            <div class="control-group">
+              <a href="#" data-api='["dirigera-command","on","kids"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","kids"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="kids" aria-label="Kids brightness" />
             </div>
           </td>
         </tr>
@@ -101,8 +115,9 @@
           <td id="Washroom" data-label="Device">Washroom</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","22","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","22","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","washroom"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","washroom"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="washroom" aria-label="Washroom brightness" />
             </div>
           </td>
         </tr>
@@ -110,8 +125,9 @@
           <td id="Bathroom" data-label="Device">Bathroom</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","8,9","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","8,9","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","bathroom"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","bathroom"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="bathroom" aria-label="Bathroom brightness" />
             </div>
           </td>
         </tr>
@@ -119,8 +135,9 @@
           <td id="Corridor" data-label="Device">Corridor</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","21,16","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","21,16","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","corridor"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","corridor"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="corridor" aria-label="Corridor brightness" />
             </div>
           </td>
         </tr>
@@ -128,8 +145,9 @@
           <td id="Restroom" data-label="Device">Restroom</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["hue","lights","10","on"]'>On</a>
-              <a href="#" data-api='["hue","lights","10","off"]'>Off</a>
+              <a href="#" data-api='["dirigera-command","on","restroom"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","restroom"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="restroom" aria-label="Restroom brightness" />
             </div>
           </td>
         </tr>
