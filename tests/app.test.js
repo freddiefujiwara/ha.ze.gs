@@ -363,3 +363,25 @@ describe("app bootstrap", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("app bootstrap guards", () => {
+  it("returns null from start when the document lacks the required elements", async () => {
+    vi.resetModules();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const { start } = await import("../src/app.js");
+    const emptyDoc = new DOMParser().parseFromString("<html><body></body></html>", "text/html");
+    expect(start(emptyDoc, fetcher)).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("returns null from bootstrapBrowser when window is undefined", async () => {
+    vi.resetModules();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const { bootstrapBrowser } = await import("../src/app.js");
+    vi.stubGlobal("window", undefined);
+    expect(bootstrapBrowser(document, fetcher)).toBeNull();
+    vi.unstubAllGlobals();
+  });
+});
