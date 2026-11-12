@@ -167,6 +167,21 @@ describe("app wiring", () => {
     errorSpy.mockRestore();
   });
 
+  it("does not clear voice text when the response is not ok", async () => {
+    const document = buildAppDocument();
+    const notOkFetcher = vi.fn().mockResolvedValue({ ok: false });
+    const instance = initApp(document, notOkFetcher);
+    wireEvents(document, notOkFetcher, instance);
+
+    document.getElementById("voicetext").value = "test";
+    document.getElementById("speak").dataset.url = "http://example.com/speak";
+    document.getElementById("speak").dispatchEvent(new Event("click"));
+    await flushPromises();
+
+    expect(notOkFetcher).toHaveBeenCalledWith("http://example.com/speak");
+    expect(document.getElementById("voicetext").value).toBe("test");
+  });
+
   it("reports on network failure", async () => {
     const document = buildAppDocument();
     const error = new Error("network");
