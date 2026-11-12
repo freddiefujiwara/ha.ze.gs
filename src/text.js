@@ -23,4 +23,4 @@ export const createTextUtils = () => {
 
 const defaultTextUtils = createTextUtils();
 
-export const { normalizeText, sanitizeText, getMaxEncodedLength, isTextTooLong } = defaultTextUtils;
+export const { normalizeText, sanitizeText } = defaultTextUtils;

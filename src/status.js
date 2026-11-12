@@ -16,7 +16,7 @@ import { reportError } from "./notify.js";
  *   statusCellKeys: Array<string>
  * }}
  */
-export const createStatusService = ({
+const createStatusService = ({
   statusScriptUrl = STATUS_SCRIPT_URL,
   statusCallback = STATUS_CALLBACK,
   statusKeys = STATUS_KEYS,

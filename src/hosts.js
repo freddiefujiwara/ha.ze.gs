@@ -8,7 +8,7 @@ import { API_BASE_URL, DEVICE_HOSTS } from "./constants.js";
  *   replaceHostTokens: (args: Array<string | number>) => Array<string | number>
  * }}
  */
-export const createHostResolver = ({ apiBaseUrl = API_BASE_URL, deviceHosts = DEVICE_HOSTS } = {}) => {
+const createHostResolver = ({ apiBaseUrl = API_BASE_URL, deviceHosts = DEVICE_HOSTS } = {}) => {
   const apiUrl = (args) => `${apiBaseUrl}/${args.map(String).join("/")}`;
   const resolveHost = (value) => deviceHosts[value] ?? value;
   const replaceHostTokens = (args) =>
