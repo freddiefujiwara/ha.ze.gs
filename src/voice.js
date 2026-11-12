@@ -18,7 +18,7 @@ import { createTextUtils } from "./text.js";
  *   buildCarArrivalArgs: () => Array<string | number>
  * }}
  */
-export const createVoiceService = ({
+const createVoiceService = ({
   apiBaseUrl = API_BASE_URL,
   voiceHosts = VOICE_HOSTS,
   deviceHosts = DEVICE_HOSTS,
