@@ -124,6 +124,16 @@
           </td>
         </tr>
         <tr class="compact">
+          <td id="Sink" data-label="Device">Sink</td>
+          <td data-label="Actions">
+            <div class="control-group">
+              <a href="#" data-api='["dirigera-command","on","sink"]'>On</a>
+              <a href="#" data-api='["dirigera-command","off","sink"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-target="sink" aria-label="Sink brightness" />
+            </div>
+          </td>
+        </tr>
+        <tr class="compact">
           <td id="Bathroom" data-label="Device">Bathroom</td>
           <td data-label="Actions">
             <div class="control-group">
