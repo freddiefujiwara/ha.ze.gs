@@ -12,6 +12,8 @@ import { CONFIG } from "./config.js";
 // configuration (see config.js); they are not written in this repository.
 export const API_BASE_URL = CONFIG.API_BASE_URL;
 export const DEVICE_HOSTS = CONFIG.DEVICE_HOSTS;
+export const SWITCHBOT_DEVICES = CONFIG.SWITCHBOT_DEVICES;
+export const STATUS_TOKEN = CONFIG.STATUS_TOKEN;
 
 export const STATUS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec";

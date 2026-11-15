@@ -14,4 +14,21 @@ describe("hosts", () => {
     const args = ["catt", "-d", "host:tv", "stop", 1];
     expect(replaceHostTokens(args)).toEqual(["catt", "-d", "192.0.2.12", "stop", 1]);
   });
+
+  it("replaces device tokens in api args", () => {
+    const args = ["switchbot-command", "-d", "device:living", "-c", "turnOn", 1];
+    expect(replaceHostTokens(args)).toEqual(["switchbot-command", "-d", "LIVINGID", "-c", "turnOn", 1]);
+  });
+
+  it("falls back to the device name when the device is not configured", () => {
+    expect(replaceHostTokens(["device:unknown"])).toEqual(["unknown"]);
+  });
+
+  it("leaves plain args untouched", () => {
+    expect(replaceHostTokens(["switchbot-command", "-c", "turnOff"])).toEqual([
+      "switchbot-command",
+      "-c",
+      "turnOff",
+    ]);
+  });
 });

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_MESSAGES } from "../src/constants.js";
-import { buildStatusUrl, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "../src/status.js";
+import { buildStatusUrl, createStatusService, fetchLatestStatus, parseLatestPayload, updateStatusCells } from "../src/status.js";
 
 vi.mock("../src/notify.js", () => ({
   notify: vi.fn(),
@@ -230,6 +230,22 @@ describe("status", () => {
   it("builds a status url", () => {
     expect(buildStatusUrl({ key: "value" })).toBe(
       "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?key=value",
+    );
+  });
+
+  it("adds the write token to status writes only", () => {
+    expect(buildStatusUrl({ s: "status", t: "hot" })).toBe(
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?s=status&t=hot&token=dummy-status-token",
+    );
+    expect(buildStatusUrl({ callback: "__statusCallback" })).toBe(
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?callback=__statusCallback",
+    );
+  });
+
+  it("omits the token when no status token is configured", () => {
+    const service = createStatusService({ statusToken: "" });
+    expect(service.buildStatusUrl({ s: "status", t: "hot" })).toBe(
+      "https://script.google.com/macros/s/AKfycbz61Wl_rfwYOuZ0z2z9qeegnIsanQeu6oI3Q3K5gX66Hgroaoz2z466ck9xMSvBfHpwUQ/exec?s=status&t=hot",
     );
   });
 });

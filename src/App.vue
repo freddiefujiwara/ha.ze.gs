@@ -6,7 +6,7 @@
         <div class="header-buttons">
           <a
             href="#"
-            data-api='[["dirigera-command","off","all"],["switchbot-command","-d","C70C0516C0C7","-c","turnOff"],["switchbot-command","-d","ECCC4C8C52C3","-c","turnOff"],["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"],["switchbot-custom","-d","03-202401251013-58699638","-c","Off"]]'
+            data-api='[["dirigera-command","off","all"],["switchbot-command","-d","device:living","-c","turnOff"],["switchbot-command","-d","device:tatami","-c","turnOff"],["switchbot-ac","-d","device:ac","-a","25,2,1,off"],["switchbot-custom","-d","device:ac-custom","-c","Off"]]'
             data-status-action="control"
             class="btn-pill"
             >Go Out</a
@@ -47,9 +47,9 @@
           <td id="Living" data-label="Device">Living</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["switchbot-command", "-d", "C70C0516C0C7", "-c", "turnOn"]'>On</a>
-              <a href="#" data-api='["switchbot-command", "-d", "C70C0516C0C7", "-c", "turnOff"]'>Off</a>
-              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","C70C0516C0C7","-c","setBrightness","-p"]' aria-label="Living brightness" />
+              <a href="#" data-api='["switchbot-command", "-d", "device:living", "-c", "turnOn"]'>On</a>
+              <a href="#" data-api='["switchbot-command", "-d", "device:living", "-c", "turnOff"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","device:living","-c","setBrightness","-p"]' aria-label="Living brightness" />
             </div>
           </td>
         </tr>
@@ -67,9 +67,9 @@
           <td id="Tatami" data-label="Device">Tatami</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["switchbot-command","-d","ECCC4C8C52C3","-c","turnOn"]'>On</a>
-              <a href="#" data-api='["switchbot-command","-d","ECCC4C8C52C3","-c","turnOff"]'>Off</a>
-              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","ECCC4C8C52C3","-c","setBrightness","-p"]' aria-label="Tatami brightness" />
+              <a href="#" data-api='["switchbot-command","-d","device:tatami","-c","turnOn"]'>On</a>
+              <a href="#" data-api='["switchbot-command","-d","device:tatami","-c","turnOff"]'>Off</a>
+              <input type="range" min="1" max="100" value="100" data-level-command='["switchbot-command","-d","device:tatami","-c","setBrightness","-p"]' aria-label="Tatami brightness" />
             </div>
           </td>
         </tr>
@@ -179,19 +179,19 @@
               <a href="#" data-status-action="control">Ctrl</a>
               <a
                 href="#"
-                data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,2,1,on"]'
+                data-api='["switchbot-ac","-d","device:ac","-a","28,2,1,on"]'
                 data-status-action="cool"
                 >Cool</a
               >
               <a
                 href="#"
-                data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","28,5,1,on"]'
+                data-api='["switchbot-ac","-d","device:ac","-a","28,5,1,on"]'
                 data-status-action="hot"
                 >Hot</a
               >
               <a
                 href="#"
-                data-api='["switchbot-ac","-d","02-202307290753-22894539","-a","25,2,1,off"]'
+                data-api='["switchbot-ac","-d","device:ac","-a","25,2,1,off"]'
                 data-status-action="off"
                 >Off</a
               >
@@ -202,9 +202,9 @@
           <td id="TatamiAC" data-label="Device">Tatami A/C</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["switchbot-custom","-d","03-202401251013-58699638","-c","Cool"]'>Cool</a>
-              <a href="#" data-api='["switchbot-custom","-d","03-202401251013-58699638","-c","Hot"]'>Hot</a>
-              <a href="#" data-api='["switchbot-custom","-d","03-202401251013-58699638","-c","Off"]'>Off</a>
+              <a href="#" data-api='["switchbot-custom","-d","device:ac-custom","-c","Cool"]'>Cool</a>
+              <a href="#" data-api='["switchbot-custom","-d","device:ac-custom","-c","Hot"]'>Hot</a>
+              <a href="#" data-api='["switchbot-custom","-d","device:ac-custom","-c","Off"]'>Off</a>
             </div>
           </td>
         </tr>
@@ -212,7 +212,7 @@
           <td data-label="Device">Tool</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='["switchbot-command","-d","D23403D2D43D","-c","press"]'>HeatFloor</a>
+              <a href="#" data-api='["switchbot-command","-d","device:heat-floor","-c","press"]'>HeatFloor</a>
               <a
                 href="#"
                 data-message-key="car-arrival"
@@ -225,10 +225,10 @@
           <td id="Fan" data-label="Device">Fan</td>
           <td data-label="Actions">
             <div class="control-group">
-              <a href="#" data-api='[["switchbot-command","-d","B0E9FEBB35D7","-c","turnOn"],["switchbot-command","-d","B0E9FEBB35D7","-c","setWindSpeed","-p","11"]]'>S</a>
-              <a href="#" data-api='[["switchbot-command","-d","B0E9FEBB35D7","-c","turnOn"],["switchbot-command","-d","B0E9FEBB35D7","-c","setWindSpeed","-p","50"]]'>M</a>
-              <a href="#" data-api='[["switchbot-command","-d","B0E9FEBB35D7","-c","turnOn"],["switchbot-command","-d","B0E9FEBB35D7","-c","setWindSpeed","-p","100"]]'>L</a>
-              <a href="#" data-api='["switchbot-command","-d","B0E9FEBB35D7","-c","turnOff"]'>Off</a>
+              <a href="#" data-api='[["switchbot-command","-d","device:fan","-c","turnOn"],["switchbot-command","-d","device:fan","-c","setWindSpeed","-p","11"]]'>S</a>
+              <a href="#" data-api='[["switchbot-command","-d","device:fan","-c","turnOn"],["switchbot-command","-d","device:fan","-c","setWindSpeed","-p","50"]]'>M</a>
+              <a href="#" data-api='[["switchbot-command","-d","device:fan","-c","turnOn"],["switchbot-command","-d","device:fan","-c","setWindSpeed","-p","100"]]'>L</a>
+              <a href="#" data-api='["switchbot-command","-d","device:fan","-c","turnOff"]'>Off</a>
             </div>
           </td>
         </tr>
