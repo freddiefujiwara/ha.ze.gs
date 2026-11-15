@@ -30,10 +30,14 @@ describe("buildConfig", () => {
     const config = buildConfig({
       VITE_API_BASE_URL: "https://home.example",
       VITE_DEVICE_HOSTS: '{"nest":"192.0.2.10","tatami":"192.0.2.11","tv":"192.0.2.12"}',
+      VITE_SWITCHBOT_DEVICES: '{"living":"LIVINGID","ac":"ACID"}',
+      VITE_STATUS_TOKEN: "dummy-status-token",
     });
     expect(config.API_BASE_URL).toBe("https://home.example");
     expect(config.DEVICE_HOSTS).toEqual({ nest: "192.0.2.10", tatami: "192.0.2.11", tv: "192.0.2.12" });
     expect(config.VOICE_HOSTS).toEqual({ speak: "192.0.2.10", speakTatami: "192.0.2.11" });
+    expect(config.SWITCHBOT_DEVICES).toEqual({ living: "LIVINGID", ac: "ACID" });
+    expect(config.STATUS_TOKEN).toBe("dummy-status-token");
   });
 
   it("falls back to empty values when the variables are not set", () => {
@@ -41,5 +45,7 @@ describe("buildConfig", () => {
     expect(config.API_BASE_URL).toBe("");
     expect(config.DEVICE_HOSTS).toEqual({});
     expect(config.VOICE_HOSTS).toEqual({ speak: undefined, speakTatami: undefined });
+    expect(config.SWITCHBOT_DEVICES).toEqual({});
+    expect(config.STATUS_TOKEN).toBe("");
   });
 });

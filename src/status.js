@@ -1,4 +1,4 @@
-import { ERROR_MESSAGES, STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL } from "./constants.js";
+import { ERROR_MESSAGES, STATUS_CALLBACK, STATUS_KEYS, STATUS_SCRIPT_URL, STATUS_TOKEN } from "./constants.js";
 import { reportError } from "./notify.js";
 
 /**
@@ -20,9 +20,17 @@ const createStatusService = ({
   statusScriptUrl = STATUS_SCRIPT_URL,
   statusCallback = STATUS_CALLBACK,
   statusKeys = STATUS_KEYS,
+  statusToken = STATUS_TOKEN,
   reportError: reportErrorFn = reportError,
 } = {}) => {
-  const buildStatusUrl = (params = {}) => `${statusScriptUrl}?${new URLSearchParams(params)}`;
+  // Writes (s=status) change the sheet the air-condition automation
+  // acts on, so they carry the shared token the GAS endpoint requires.
+  // Reads (the JSONP status fetch) stay token-free.
+  const buildStatusUrl = (params = {}) => {
+    const withToken =
+      params.s === "status" && statusToken ? { ...params, token: statusToken } : params;
+    return `${statusScriptUrl}?${new URLSearchParams(withToken)}`;
+  };
 
   const stripStatusCallback = (value) =>
     value
@@ -120,6 +128,7 @@ const createStatusService = ({
 
 const defaultStatusService = createStatusService();
 
+export { createStatusService };
 export const { buildStatusUrl, parseLatestPayload, fetchLatestStatus, updateStatusCells } = defaultStatusService;
 
 /**

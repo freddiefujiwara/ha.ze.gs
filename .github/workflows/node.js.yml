@@ -57,6 +57,8 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
           VITE_DEVICE_HOSTS: ${{ secrets.DEVICE_HOSTS }}
+          VITE_SWITCHBOT_DEVICES: ${{ secrets.SWITCHBOT_DEVICES }}
+          VITE_STATUS_TOKEN: ${{ secrets.STATUS_TOKEN }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
