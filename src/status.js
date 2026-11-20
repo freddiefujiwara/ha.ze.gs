@@ -54,7 +54,10 @@ const createStatusService = ({
         return null;
       }
       const latest = conditions.at(-1);
-      return latest ? (status === undefined ? latest : { ...latest, AirCondition: status }) : null;
+      // A deformed last row (scalar, string, array) is no status at all;
+      // spreading it would fabricate readings from its characters/keys.
+      if (!latest || typeof latest !== "object" || Array.isArray(latest)) return null;
+      return status === undefined ? latest : { ...latest, AirCondition: status };
     } catch (error) {
       reportErrorFn(doc, ERROR_MESSAGES.FETCH_PAYLOAD, {
         cleanedPreview: payload.length > 200 ? `${payload.slice(0, 200)}…` : payload,
@@ -93,6 +96,9 @@ const createStatusService = ({
   };
 
   const formatDateTimeLocal = (value) => {
+    // Only strings carry a date here; a number would silently format as
+    // a 1970 date and an unstringifiable value would throw in Date.
+    if (typeof value !== "string") return "";
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime())
       ? value
@@ -107,13 +113,23 @@ const createStatusService = ({
           .replace(",", "");
   };
 
+  // Cell values arrive from the conditions sheet; anything that is not
+  // a string or a finite number is not a reading and renders blank
+  // instead of "undefinedC", "null%" or "trueC".
+  const cellText = (value) => {
+    if (typeof value === "string") return value;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    return "";
+  };
+
   const updateStatusCells = (latest, elements) => {
     if (!latest || typeof latest !== "object") return;
     statusKeys.forEach((key) => {
       const value = latest[key];
-      if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : String(value));
+      if (key === "AirCondition") return void (elements[key].innerText = value == null ? "AirCondition" : cellText(value));
       if (key === "Date") return void (elements[key].innerText = formatDateTimeLocal(value));
-      elements[key].innerText = key === "Temperature" ? `${value}C` : `${value}%`;
+      const text = cellText(value);
+      elements[key].innerText = text === "" ? "" : key === "Temperature" ? `${text}C` : `${text}%`;
     });
   };
 
