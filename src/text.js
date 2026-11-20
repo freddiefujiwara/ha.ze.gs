@@ -7,7 +7,16 @@
  * }}
  */
 export const createTextUtils = () => {
-  const normalizeText = (value) => String(value ?? "").replace(/\s+/g, "　").trim();
+  // Values whose toString is not callable (producible via JSON) make
+  // String() throw; they read as empty text instead.
+  const toText = (value) => {
+    try {
+      return String(value ?? "");
+    } catch {
+      return "";
+    }
+  };
+  const normalizeText = (value) => toText(value).replace(/\s+/g, "　").trim();
   const sanitizeText = (value) => encodeURIComponent(normalizeText(value));
   const getMaxEncodedLength = (maxText) => encodeURIComponent(normalizeText(maxText)).length;
   const isTextTooLong = (value, maxText) =>

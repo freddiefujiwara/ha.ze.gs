@@ -47,7 +47,14 @@ const createYouTubeService = ({ apiBaseUrl = API_BASE_URL, youtubeHosts = YOUTUB
     if (!videoId) {
       return null;
     }
-    const volumeNumber = Number(volume);
+    // Only numbers and non-blank numeric strings carry a volume; a bare
+    // Number() would turn true into 1, [60] into 60 and "" into 0.
+    const volumeNumber =
+      typeof volume === "number"
+        ? volume
+        : typeof volume === "string" && volume.trim() !== ""
+          ? Number(volume)
+          : NaN;
     const resolvedVolume =
       Number.isFinite(volumeNumber) && volumeNumber >= 0 && volumeNumber <= 100 ? volumeNumber : 40;
     return `${apiBaseUrl}/youtube-play/-h/${host}/-v/${resolvedVolume}/-i/${videoId}`;

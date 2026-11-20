@@ -13,9 +13,21 @@ const createHostResolver = ({
   deviceHosts = DEVICE_HOSTS,
   switchbotDevices = SWITCHBOT_DEVICES,
 } = {}) => {
-  const apiUrl = (args) => `${apiBaseUrl}/${args.map(String).join("/")}`;
-  const resolveHost = (value) => deviceHosts[value] ?? value;
-  const resolveDevice = (value) => switchbotDevices[value] ?? value;
+  // Args come from JSON payloads, where a value's toString may not be
+  // callable; such a segment reads as empty instead of throwing.
+  const toSegment = (arg) => {
+    try {
+      return String(arg);
+    } catch {
+      return "";
+    }
+  };
+  const apiUrl = (args) => `${apiBaseUrl}/${args.map(toSegment).join("/")}`;
+  // Own-property lookups only: a plain map access would resolve names
+  // like "toString" or "constructor" through the prototype chain and
+  // hand back a function instead of the name itself.
+  const resolveHost = (value) => (Object.hasOwn(deviceHosts, value) ? deviceHosts[value] : value);
+  const resolveDevice = (value) => (Object.hasOwn(switchbotDevices, value) ? switchbotDevices[value] : value);
   // `host:<name>` tokens name LAN hosts and `device:<name>` tokens
   // name SwitchBot devices; both maps are build-time configuration so
   // no address or device id is written in this repository.
